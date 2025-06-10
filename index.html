@@ -37,6 +37,10 @@
             align-self: flex-start;
             border-bottom-left-radius: 0.25rem;
         }
+        textarea {
+            resize: none;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="gradient-bg text-white min-h-screen flex flex-col p-4">
@@ -130,7 +134,7 @@
     <!-- Premium Modal -->
     <div id="premiumModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-8 max-w-sm w-full text-center relative">
-            <button id="closeModalBtn" class="absolute top-4 right-4 text-white/70 hover:text-white">&times;</button>
+            <button id="premiumCloseBtn" class="absolute top-4 right-4 text-white/70 hover:text-white">&times;</button>
             <h2 class="text-2xl font-bold text-yellow-300 mb-4">Unlock Idea Spark Premium!</h2>
             <p class="text-indigo-200 mb-6">Get unlimited idea generations, an ad-free experience, and access to exclusive brainstorming models.</p>
             <div class="bg-white/90 text-gray-900 rounded-lg p-6">
@@ -151,7 +155,7 @@
         const errorMessage = document.getElementById('error-message');
         const goPremiumBtn = document.getElementById('goPremiumBtn');
         const premiumModal = document.getElementById('premiumModal');
-        const closeModalBtn = document.getElementById('closeModalBtn');
+        const premiumCloseBtn = document.getElementById('premiumCloseBtn');
         const savedIdeasList = document.getElementById('saved-ideas-list');
         const generatorView = document.getElementById('generatorView');
         const savedView = document.getElementById('savedView');
@@ -167,14 +171,15 @@
         const FREE_GENERATIONS_LIMIT = 5;
         let generationCount = 0;
         let savedIdeas = [];
-        let activeChatIndex = null;
-        let editingIndex = null; // To track which idea is being edited
+        let generatedIdeas = [];
+        let activeChat = { type: null, index: null }; // type can be 'generated' or 'saved'
+        let editing = { type: null, index: null };
 
         // --- Event Listeners ---
         window.addEventListener('load', loadSavedIdeas);
         generateBtn.addEventListener('click', handleGeneration);
         goPremiumBtn.addEventListener('click', () => premiumModal.classList.remove('hidden'));
-        closeModalBtn.addEventListener('click', () => premiumModal.classList.add('hidden'));
+        premiumCloseBtn.addEventListener('click', () => premiumModal.classList.add('hidden'));
         premiumModal.addEventListener('click', (e) => (e.target === premiumModal) && premiumModal.classList.add('hidden'));
         generatorTab.addEventListener('click', () => switchView('generator'));
         savedTab.addEventListener('click', () => switchView('saved'));
@@ -186,7 +191,7 @@
         // --- Core Functions ---
         
         function switchView(viewName) {
-            editingIndex = null; // Exit edit mode when switching views
+            editing = { type: null, index: null }; // Exit edit mode when switching views
             if (viewName === 'generator') {
                 generatorView.classList.remove('hidden');
                 savedView.classList.add('hidden');
@@ -217,7 +222,12 @@
             generateBtn.innerText = 'Generating...';
             try {
                 const ideas = await fetchIdeasFromAI(`Generate a numbered list of 5 creative and unique ideas for the following topic: "${topic}". Return only the numbered list, without any introductory text.`);
-                displayResults(ideas);
+                // Store ideas as objects
+                generatedIdeas = ideas.map(idea => ({
+                    originalIdea: idea.replace(/^\d+\.\s*/, ''),
+                    conversation: []
+                }));
+                displayGeneratedIdeas();
                 generationCount++;
                 updateGenerationStatus();
             } catch (error) {
@@ -243,34 +253,101 @@
             throw new Error(data.error || "Invalid response from serverless function.");
         }
 
-        function displayResults(ideas) {
-            resultsDiv.innerHTML = ''; 
-            ideas.forEach(ideaText => {
-                const cleanIdeaText = ideaText.replace(/^\d+\.\s*/, '');
-                const ideaElement = document.createElement('div');
-                ideaElement.className = 'glass-card p-3 rounded-lg flex justify-between items-center gap-2';
-                const textSpan = document.createElement('span');
-                textSpan.textContent = cleanIdeaText;
-                textSpan.className = 'flex-grow';
-                ideaElement.appendChild(textSpan);
-                const saveButton = document.createElement('button');
-                const isAlreadySaved = savedIdeas.some(ideaObj => ideaObj.originalIdea === cleanIdeaText);
-                if (isAlreadySaved) {
-                    saveButton.textContent = 'Saved!';
-                    saveButton.disabled = true;
-                    saveButton.className = 'bg-indigo-500/50 text-white text-sm font-semibold py-1 px-3 rounded-full cursor-not-allowed flex-shrink-0';
-                } else {
-                    saveButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-1"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg> Save`;
-                    saveButton.className = 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition flex-shrink-0';
-                    saveButton.onclick = () => {
-                        saveIdea(cleanIdeaText);
-                        saveButton.textContent = 'Saved!';
-                        saveButton.disabled = true;
-                        saveButton.className = 'bg-indigo-500/50 text-white text-sm font-semibold py-1 px-3 rounded-full cursor-not-allowed flex-shrink-0';
-                    };
+        function createIdeaCard(ideaObj, index, type) {
+            const ideaElement = document.createElement('div');
+            ideaElement.className = 'glass-card p-4 rounded-lg flex flex-col gap-3';
+
+            const mainContent = document.createElement('div');
+            const isEditingThis = editing.type === type && editing.index === index;
+
+            if (isEditingThis) {
+                const textarea = document.createElement('textarea');
+                textarea.value = ideaObj.originalIdea;
+                textarea.className = 'flex-grow w-full bg-white/20 border border-white/30 rounded-lg py-1 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-400';
+                textarea.rows = '1';
+                // Auto-resize textarea
+                textarea.addEventListener('input', () => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = (textarea.scrollHeight) + 'px';
+                });
+                setTimeout(() => { // ensure it resizes on first render
+                    textarea.style.height = 'auto';
+                    textarea.style.height = (textarea.scrollHeight) + 'px';
+                }, 0);
+                mainContent.appendChild(textarea);
+            } else {
+                mainContent.textContent = ideaObj.originalIdea;
+            }
+             ideaElement.appendChild(mainContent);
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'flex items-center gap-2 justify-end border-t border-white/10 pt-3 mt-3';
+
+            if(isEditingThis) {
+                 const saveBtn = document.createElement('button');
+                 saveBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Save`;
+                 saveBtn.className = 'bg-green-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-green-500/100 transition flex-shrink-0 flex items-center gap-1';
+                 saveBtn.onclick = () => handleEditSave(index, type);
+                 buttonContainer.appendChild(saveBtn);
+
+                 const cancelBtn = document.createElement('button');
+                 cancelBtn.textContent = 'Cancel';
+                 cancelBtn.className = 'bg-red-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-red-500/100 transition flex-shrink-0';
+                 cancelBtn.onclick = () => toggleEditMode(index, type);
+                 buttonContainer.appendChild(cancelBtn);
+            } else {
+                 const isSaved = savedIdeas.some(saved => saved.originalIdea === ideaObj.originalIdea);
+
+                 if (type === 'generated') {
+                     const saveButton = document.createElement('button');
+                     saveButton.disabled = isSaved;
+                     saveButton.className = isSaved
+                         ? 'bg-indigo-500/50 text-white text-sm font-semibold py-1 px-3 rounded-full cursor-not-allowed flex-shrink-0'
+                         : 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition flex-shrink-0';
+                     saveButton.innerHTML = isSaved ? 'Saved!' : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-1"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg> Save`;
+                     saveButton.onclick = () => saveGeneratedIdea(index);
+                     buttonContainer.appendChild(saveButton);
+                 }
+                
+                const chatButton = document.createElement('button');
+                chatButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-1"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Chat`;
+                chatButton.className = 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition flex-shrink-0 flex items-center gap-1';
+                chatButton.onclick = () => openChat(index, type);
+                buttonContainer.appendChild(chatButton);
+
+                const editButton = document.createElement('button');
+                editButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+                editButton.className = 'bg-white/10 text-white p-2 rounded-full hover:bg-white/30 transition';
+                editButton.onclick = () => toggleEditMode(index, type);
+                buttonContainer.appendChild(editButton);
+
+                if (type === 'saved') {
+                     const deleteButton = document.createElement('button');
+                     deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                     deleteButton.className = 'bg-red-500/50 text-white p-2 rounded-full hover:bg-red-500/80 transition';
+                     deleteButton.onclick = () => deleteIdea(index);
+                     buttonContainer.appendChild(deleteButton);
                 }
-                ideaElement.appendChild(saveButton);
-                resultsDiv.appendChild(ideaElement);
+            }
+            ideaElement.appendChild(buttonContainer);
+            return ideaElement;
+        }
+
+        function displayGeneratedIdeas() {
+            resultsDiv.innerHTML = ''; 
+            generatedIdeas.forEach((ideaObj, index) => {
+                resultsDiv.appendChild(createIdeaCard(ideaObj, index, 'generated'));
+            });
+        }
+        
+        function renderSavedIdeas() {
+            savedIdeasList.innerHTML = '';
+            if (savedIdeas.length === 0) {
+                savedIdeasList.innerHTML = `<p class="text-center text-indigo-200">You haven't saved any ideas yet.</p>`;
+                return;
+            }
+            savedIdeas.forEach((ideaObj, index) => {
+                savedIdeasList.appendChild(createIdeaCard(ideaObj, index, 'saved'));
             });
         }
         
@@ -280,10 +357,12 @@
             renderSavedIdeas();
         }
 
-        function saveIdea(ideaText) {
-            if (!savedIdeas.some(idea => idea.originalIdea === ideaText)) {
-                savedIdeas.push({ originalIdea: ideaText, conversation: [] });
+        function saveGeneratedIdea(index) {
+            const ideaToSave = generatedIdeas[index];
+            if (!savedIdeas.some(saved => saved.originalIdea === ideaToSave.originalIdea)) {
+                savedIdeas.push(ideaToSave);
                 localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
+                displayGeneratedIdeas(); // Re-render to update the "Saved!" button
             }
         }
 
@@ -293,86 +372,53 @@
             renderSavedIdeas();
         }
 
-        function toggleEditMode(index) {
-            editingIndex = (editingIndex === index) ? null : index;
-            renderSavedIdeas();
+        function toggleEditMode(index, type) {
+            if (editing.index === index && editing.type === type) {
+                editing = { type: null, index: null }; // cancel edit
+            } else {
+                editing = { type, index };
+            }
+            if (type === 'generated') displayGeneratedIdeas();
+            if (type === 'saved') renderSavedIdeas();
         }
         
-        function handleEditSave(index) {
-            const inputElement = document.getElementById(`edit-input-${index}`);
+        function handleEditSave(index, type) {
+            const sourceArray = (type === 'generated') ? generatedIdeas : savedIdeas;
+            const inputElement = document.querySelector('.glass-card textarea'); // There will only be one
             if (inputElement) {
-                savedIdeas[index].originalIdea = inputElement.value;
-                localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
-                editingIndex = null;
-                renderSavedIdeas();
-            }
-        }
-
-        function renderSavedIdeas() {
-            savedIdeasList.innerHTML = '';
-            if (savedIdeas.length === 0) {
-                savedIdeasList.innerHTML = `<p class="text-center text-indigo-200">You haven't saved any ideas yet.</p>`;
-                return;
-            }
-            savedIdeas.forEach((ideaObj, index) => {
-                const ideaElement = document.createElement('div');
-                ideaElement.className = 'glass-card p-4 rounded-lg flex items-center gap-2';
-
-                if (editingIndex === index) {
-                    // Render edit state
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.id = `edit-input-${index}`;
-                    input.value = ideaObj.originalIdea;
-                    input.className = 'flex-grow bg-white/20 border border-white/30 rounded-lg py-1 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-400';
-                    ideaElement.appendChild(input);
-
-                    const saveBtn = document.createElement('button');
-                    saveBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-                    saveBtn.className = 'bg-green-500/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-green-500/80 transition';
-                    saveBtn.onclick = () => handleEditSave(index);
-                    ideaElement.appendChild(saveBtn);
-
-                    const cancelBtn = document.createElement('button');
-                    cancelBtn.innerHTML = '&times;';
-                    cancelBtn.className = 'bg-red-500/50 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold hover:bg-red-500/80 transition';
-                    cancelBtn.onclick = () => toggleEditMode(index);
-                    ideaElement.appendChild(cancelBtn);
-
-                } else {
-                    // Render normal view state
-                    const textButton = document.createElement('button');
-                    textButton.textContent = ideaObj.originalIdea;
-                    textButton.className = 'mr-2 text-left flex-grow hover:text-indigo-300';
-                    textButton.onclick = () => openChat(index);
-                    ideaElement.appendChild(textButton);
-                    
-                    const editButton = document.createElement('button');
-                    editButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-                    editButton.className = 'bg-white/10 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-white/30 transition';
-                    editButton.onclick = () => toggleEditMode(index);
-                    ideaElement.appendChild(editButton);
-
-                    const deleteButton = document.createElement('button');
-                    deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-                    deleteButton.className = 'bg-red-500/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-500/80 transition';
-                    deleteButton.onclick = () => deleteIdea(index);
-                    ideaElement.appendChild(deleteButton);
+                sourceArray[index].originalIdea = inputElement.value;
+                if (type === 'saved') {
+                    localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
                 }
-                
-                savedIdeasList.appendChild(ideaElement);
-            });
+                editing = { type: null, index: null };
+                if (type === 'generated') displayGeneratedIdeas();
+                if (type === 'saved') renderSavedIdeas();
+            }
         }
 
-        function openChat(index) {
-            activeChatIndex = index;
+        function openChat(index, type) {
+            if (type === 'generated') {
+                 // Automatically save the idea if chatting from the generator view
+                const ideaToSave = generatedIdeas[index];
+                 if (!savedIdeas.some(saved => saved.originalIdea === ideaToSave.originalIdea)) {
+                     saveGeneratedIdea(index);
+                 }
+                 // Find the new index in the savedIdeas array
+                 const savedIndex = savedIdeas.findIndex(saved => saved.originalIdea === ideaToSave.originalIdea);
+                 activeChat = { type: 'saved', index: savedIndex };
+            } else {
+                activeChat = { type: 'saved', index };
+            }
+            
             renderChatHistory();
             chatModal.classList.remove('hidden');
         }
 
         function renderChatHistory() {
             chatHistory.innerHTML = '';
-            const ideaObj = savedIdeas[activeChatIndex];
+            if (activeChat.index === null) return;
+
+            const ideaObj = savedIdeas[activeChat.index];
             const originalIdeaBubble = document.createElement('div');
             originalIdeaBubble.className = 'chat-bubble chat-bubble-ai';
             originalIdeaBubble.innerHTML = `<p class="font-bold mb-1">Original Idea</p><p>${ideaObj.originalIdea}</p>`;
@@ -388,11 +434,11 @@
 
         async function handleChatSend() {
             const userInput = chatInput.value.trim();
-            if (!userInput || activeChatIndex === null) return;
-            savedIdeas[activeChatIndex].conversation.push({ role: 'user', text: userInput });
+            if (!userInput || activeChat.index === null) return;
+            savedIdeas[activeChat.index].conversation.push({ role: 'user', text: userInput });
             renderChatHistory();
             chatInput.value = '';
-            const ideaObj = savedIdeas[activeChatIndex];
+            const ideaObj = savedIdeas[activeChat.index];
             let conversationPrompt = `The original idea was: "${ideaObj.originalIdea}".\n\nPrevious conversation:\n`;
             ideaObj.conversation.forEach(msg => {
                 conversationPrompt += `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.text}\n`;
@@ -401,7 +447,7 @@
             try {
                 const responseIdeas = await fetchIdeasFromAI(conversationPrompt);
                 const aiResponse = responseIdeas.join('\n');
-                savedIdeas[activeChatIndex].conversation.push({ role: 'ai', text: aiResponse });
+                savedIdeas[activeChat.index].conversation.push({ role: 'ai', text: aiResponse });
                 localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
                 renderChatHistory();
             } catch (error) {
