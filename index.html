@@ -18,54 +18,61 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        .tab.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
-<body class="gradient-bg text-white min-h-screen flex items-center justify-center p-4">
+<body class="gradient-bg text-white min-h-screen flex flex-col justify-between p-4">
 
-    <div class="w-full max-w-md mx-auto">
-        <!-- Main App Card -->
-        <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8">
-            <header class="text-center mb-6">
-                <h1 class="text-4xl font-bold">Idea Spark ✨</h1>
-                <p class="text-indigo-200 mt-2">Your personal AI brainstorming partner</p>
-            </header>
-
-            <main>
-                <!-- Input Section -->
-                <div class="mb-4">
-                    <label for="topic" class="block text-sm font-medium text-indigo-200 mb-2">What topic do you need ideas for?</label>
-                    <input type="text" id="topic" class="w-full bg-white/20 border border-white/30 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" placeholder="e.g., 'podcast names', 'healthy dinner recipes'">
-                </div>
-                
-                <button id="generateBtn" class="w-full bg-white text-indigo-600 font-bold py-3 px-4 rounded-lg hover:bg-indigo-100 transition-all shadow-lg transform hover:scale-105">
-                    Generate Ideas
-                </button>
-
-                <!-- Ad Placeholder -->
-                <div id="ad-placeholder" class="my-6 text-center bg-black/20 rounded-lg p-4 h-16 flex items-center justify-center text-xs text-gray-400">
-                    Advertisement Placeholder
-                </div>
-
-                <!-- Results Section -->
-                <div id="results-container" class="mt-6">
-                    <h2 class="text-xl font-semibold mb-3">Your Ideas:</h2>
-                    <div id="loader" class="hidden text-center">
-                        <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <p class="mt-2">Sparking some brilliance...</p>
-                    </div>
-                    <div id="results" class="space-y-3">
-                        <!-- Generated ideas will be injected here -->
-                    </div>
-                     <p id="error-message" class="hidden text-red-300 text-center"></p>
-                </div>
-            </main>
-        </div>
+    <!-- Main Content Area -->
+    <div class="w-full max-w-md mx-auto flex-grow">
         
-        <!-- *** NEW: Saved Ideas Section *** -->
-        <div id="saved-ideas-section" class="mt-8 hidden">
+        <!-- Generator View -->
+        <div id="generatorView">
+            <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8">
+                <header class="text-center mb-6">
+                    <h1 class="text-4xl font-bold">Idea Spark ✨</h1>
+                    <p class="text-indigo-200 mt-2">Your personal AI brainstorming partner</p>
+                </header>
+
+                <main>
+                    <div class="mb-4">
+                        <label for="topic" class="block text-sm font-medium text-indigo-200 mb-2">What topic do you need ideas for?</label>
+                        <input type="text" id="topic" class="w-full bg-white/20 border border-white/30 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" placeholder="e.g., 'podcast names'">
+                    </div>
+                    
+                    <button id="generateBtn" class="w-full bg-white text-indigo-600 font-bold py-3 px-4 rounded-lg hover:bg-indigo-100 transition-all shadow-lg transform hover:scale-105">
+                        Generate Ideas
+                    </button>
+
+                    <div id="ad-placeholder" class="my-6 text-center bg-black/20 rounded-lg p-4 h-16 flex items-center justify-center text-xs text-gray-400">
+                        Advertisement Placeholder
+                    </div>
+
+                    <div id="results-container" class="mt-6">
+                        <h2 class="text-xl font-semibold mb-3">Your Ideas:</h2>
+                        <div id="loader" class="hidden text-center">
+                            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-2">Sparking some brilliance...</p>
+                        </div>
+                        <div id="results" class="space-y-3"></div>
+                         <p id="error-message" class="hidden text-red-300 text-center"></p>
+                    </div>
+                </main>
+            </div>
+             <div class="text-center mt-6">
+                <button id="goPremiumBtn" class="bg-yellow-400 text-gray-900 font-bold py-2 px-6 rounded-full hover:bg-yellow-300 transition-all shadow-lg transform hover:scale-105">
+                    🚀 Go Premium
+                </button>
+            </div>
+        </div>
+
+        <!-- Saved Ideas View -->
+        <div id="savedView" class="hidden">
              <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8">
                 <h2 class="text-2xl font-bold mb-4 text-center">Saved Ideas 📌</h2>
                 <div id="saved-ideas-list" class="space-y-3">
@@ -73,15 +80,16 @@
                 </div>
             </div>
         </div>
-
-
-        <!-- Premium Offer Card -->
-        <div class="text-center mt-6">
-            <button id="goPremiumBtn" class="bg-yellow-400 text-gray-900 font-bold py-2 px-6 rounded-full hover:bg-yellow-300 transition-all shadow-lg transform hover:scale-105">
-                🚀 Go Premium
-            </button>
-        </div>
     </div>
+
+    <!-- Bottom Tab Menu -->
+    <nav class="w-full max-w-md mx-auto glass-card rounded-full p-2 mt-4">
+        <div class="flex justify-around">
+            <button id="generatorTab" class="tab active flex-1 text-center font-semibold py-2 px-4 rounded-full transition">Generator</button>
+            <button id="savedTab" class="tab flex-1 text-center font-semibold py-2 px-4 rounded-full transition">Saved</button>
+        </div>
+    </nav>
+
 
     <!-- Premium Modal -->
     <div id="premiumModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
@@ -108,19 +116,20 @@
         const goPremiumBtn = document.getElementById('goPremiumBtn');
         const premiumModal = document.getElementById('premiumModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
-        // *** NEW ***
-        const savedIdeasSection = document.getElementById('saved-ideas-section');
         const savedIdeasList = document.getElementById('saved-ideas-list');
+        // Views & Tabs
+        const generatorView = document.getElementById('generatorView');
+        const savedView = document.getElementById('savedView');
+        const generatorTab = document.getElementById('generatorTab');
+        const savedTab = document.getElementById('savedTab');
 
         // --- App State & Config ---
         const FREE_GENERATIONS_LIMIT = 5;
         let generationCount = 0;
-        let savedIdeas = []; // *** NEW ***
+        let savedIdeas = [];
 
         // --- Event Listeners ---
-        window.addEventListener('load', () => { // *** NEW ***
-            loadSavedIdeas();
-        });
+        window.addEventListener('load', loadSavedIdeas);
         generateBtn.addEventListener('click', handleGeneration);
         goPremiumBtn.addEventListener('click', () => premiumModal.classList.remove('hidden'));
         closeModalBtn.addEventListener('click', () => premiumModal.classList.add('hidden'));
@@ -129,9 +138,28 @@
                 premiumModal.classList.add('hidden');
             }
         });
+        // Tab listeners
+        generatorTab.addEventListener('click', () => switchView('generator'));
+        savedTab.addEventListener('click', () => switchView('saved'));
+
 
         // --- Core Functions ---
         
+        function switchView(viewName) {
+            if (viewName === 'generator') {
+                generatorView.classList.remove('hidden');
+                savedView.classList.add('hidden');
+                generatorTab.classList.add('active');
+                savedTab.classList.remove('active');
+            } else {
+                generatorView.classList.add('hidden');
+                savedView.classList.remove('hidden');
+                generatorTab.classList.remove('active');
+                savedTab.classList.add('active');
+                renderSavedIdeas(); // Re-render in case ideas were saved/deleted
+            }
+        }
+
         async function handleGeneration() {
             const topic = topicInput.value.trim();
             if (!topic) {
@@ -195,25 +223,36 @@
                 const cleanIdeaText = ideaText.replace(/^\d+\.\s*/, '');
                 
                 const ideaElement = document.createElement('div');
-                ideaElement.className = 'glass-card p-4 rounded-lg flex justify-between items-center';
+                ideaElement.className = 'glass-card p-3 rounded-lg flex justify-between items-center';
 
                 const textSpan = document.createElement('span');
                 textSpan.textContent = cleanIdeaText;
+                textSpan.className = 'mr-2';
                 ideaElement.appendChild(textSpan);
 
-                // *** NEW: Save button for each idea ***
                 const saveButton = document.createElement('button');
-                saveButton.innerHTML = '&#43;'; // Plus sign icon
-                saveButton.className = 'bg-white/20 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold hover:bg-white/40 transition';
-                saveButton.onclick = () => saveIdea(cleanIdeaText);
-                ideaElement.appendChild(saveButton);
+                const isAlreadySaved = savedIdeas.includes(cleanIdeaText);
 
+                if (isAlreadySaved) {
+                    saveButton.textContent = 'Saved!';
+                    saveButton.disabled = true;
+                    saveButton.className = 'bg-indigo-500/50 text-white text-sm font-semibold py-1 px-3 rounded-full cursor-not-allowed';
+                } else {
+                    saveButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-1"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg> Save`;
+                    saveButton.className = 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition';
+                    saveButton.onclick = () => {
+                        saveIdea(cleanIdeaText);
+                        saveButton.textContent = 'Saved!';
+                        saveButton.disabled = true;
+                         saveButton.className = 'bg-indigo-500/50 text-white text-sm font-semibold py-1 px-3 rounded-full cursor-not-allowed';
+                    };
+                }
+                
+                ideaElement.appendChild(saveButton);
                 resultsDiv.appendChild(ideaElement);
             });
         }
         
-        // *** NEW: Functions for saving, loading, and deleting ideas ***
-
         function loadSavedIdeas() {
             const ideasFromStorage = localStorage.getItem('ideaSparkSavedIdeas');
             if (ideasFromStorage) {
@@ -226,36 +265,34 @@
             if (!savedIdeas.includes(ideaText)) {
                 savedIdeas.push(ideaText);
                 localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
-                renderSavedIdeas();
             }
         }
 
         function deleteIdea(index) {
             savedIdeas.splice(index, 1);
             localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
-            renderSavedIdeas();
+            renderSavedIdeas(); // Re-render the list after deletion
         }
 
         function renderSavedIdeas() {
             savedIdeasList.innerHTML = '';
 
             if (savedIdeas.length === 0) {
-                savedIdeasSection.classList.add('hidden');
+                 savedIdeasList.innerHTML = `<p class="text-center text-indigo-200">You haven't saved any ideas yet.</p>`;
                 return;
             }
-
-            savedIdeasSection.classList.remove('hidden');
-
+            
             savedIdeas.forEach((ideaText, index) => {
                 const ideaElement = document.createElement('div');
                 ideaElement.className = 'glass-card p-4 rounded-lg flex justify-between items-center';
                 
                 const textSpan = document.createElement('span');
                 textSpan.textContent = ideaText;
+                textSpan.className = 'mr-2';
                 ideaElement.appendChild(textSpan);
 
                 const deleteButton = document.createElement('button');
-                deleteButton.innerHTML = '&times;'; // Cross sign icon
+                deleteButton.innerHTML = '&times;';
                 deleteButton.className = 'bg-red-500/50 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold hover:bg-red-500/80 transition';
                 deleteButton.onclick = () => deleteIdea(index);
                 ideaElement.appendChild(deleteButton);
