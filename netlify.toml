@@ -4,3 +4,7 @@
 [build]
   # This tells Netlify where your serverless functions are located.
   functions = "netlify/functions/"
+
+# This plugin automatically installs the necessary dependencies for your functions.
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
