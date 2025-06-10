@@ -60,7 +60,7 @@
         .chat-bubble { padding: 0.75rem 1rem; border-radius: 1rem; max-width: 80%; }
         .chat-bubble-user { background-color: rgba(255, 255, 255, 0.2); align-self: flex-end; border-bottom-right-radius: 0.25rem; }
         .chat-bubble-ai { background-color: rgba(0, 0, 0, 0.2); align-self: flex-start; border-bottom-left-radius: 0.25rem; }
-        textarea { resize: none; overflow: hidden; }
+        textarea { resize: none; overflow-y: hidden; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-4">
@@ -70,8 +70,8 @@
         <h1 class="text-4xl font-bold">Idea Spark ✨</h1>
         <p class="mt-2" style="color: var(--text-secondary);">Your personal AI brainstorming partner</p>
         <!-- Theme Switcher -->
-        <div class="absolute top-0 right-0">
-            <button id="themeSwitcher" class="glass-card p-2 rounded-full">
+        <div id="theme-switcher-container" class="absolute top-0 right-0 flex gap-2">
+             <button id="themeSwitcher" class="glass-card p-2 rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             </button>
         </div>
@@ -134,19 +134,16 @@
                 <div class="flex gap-2 mb-4">
                     <input type="text" id="searchInput" class="flex-grow w-full bg-white/10 border border-white/20 rounded-full py-1 px-3 focus:outline-none" placeholder="Search saved ideas...">
                     <select id="folderFilter" class="bg-white/10 border border-white/20 rounded-full py-1 px-3 focus:outline-none">
-                        <!-- Options will be populated by JS -->
                     </select>
                 </div>
 
                 <div id="saved-ideas-list" class="space-y-4">
-                    <!-- Saved ideas and folders will be injected here -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modals... -->
-    <!-- Chat Modal -->
+    <!-- Modals -->
     <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -163,7 +160,6 @@
         </div>
     </div>
 
-    <!-- Move to Folder Modal -->
      <div id="moveFolderModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-6 max-w-sm w-full">
             <h3 class="font-bold text-lg mb-4">Move to Folder</h3>
@@ -175,31 +171,31 @@
         </div>
     </div>
 
-    <!-- Folder Color Modal -->
     <div id="folderColorModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-6 max-w-sm w-full">
             <h3 class="font-bold text-lg mb-4">Choose Folder Color</h3>
-            <div id="color-options" class="grid grid-cols-4 gap-4"></div>
+            <div id="color-options" class="grid grid-cols-5 gap-4"></div>
         </div>
     </div>
 
-    <!-- Premium Modal -->
     <div id="premiumModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
-        <div class="glass-card rounded-2xl p-8 max-w-sm w-full text-center relative">
-            <button id="premiumCloseBtn" class="absolute top-4 right-4">&times;</button>
-            <h2 class="text-2xl font-bold text-yellow-300 mb-4">Unlock Idea Spark Premium!</h2>
-            <p class="mb-6" style="color: var(--text-secondary);">Unlock exclusive themes and features.</p>
-            <div class="bg-white/90 text-gray-900 rounded-lg p-6 space-y-4">
-                 <div>
+        <div class="glass-card rounded-2xl p-6 max-w-lg w-full">
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-bold text-yellow-300">Go Premium</h2>
+                 <button id="premiumCloseBtn" class="text-3xl leading-none">&times;</button>
+            </div>
+            <div class="md:flex md:gap-6">
+                 <div class="flex-1 bg-white/10 p-6 rounded-lg mb-4 md:mb-0 text-center">
                     <h4 class="text-lg font-bold">Theme Pack</h4>
-                    <p class="text-sm text-gray-600">Get the "Hacker" theme and more!</p>
-                    <p class="text-3xl font-bold my-1">$0.99</p>
-                    <button class="w-full mt-2 bg-indigo-600 text-white font-bold py-2 rounded-lg">Buy Themes</button>
+                    <p class="text-sm mt-1" style="color: var(--text-secondary)">Get the "Hacker" theme and more unique styles!</p>
+                    <p class="text-4xl font-bold my-2">$0.99</p>
+                    <button class="w-full mt-2 bg-yellow-500 text-black font-bold py-2 rounded-lg">Buy Themes</button>
                  </div>
-                 <div class="border-t pt-4">
-                     <p class="text-lg font-medium">Unlimited Generations</p>
+                 <div class="flex-1 bg-white/10 p-6 rounded-lg text-center">
+                     <p class="text-lg font-bold">Unlimited Generations</p>
+                     <p class="text-sm mt-1" style="color: var(--text-secondary)">Remove the daily generation limit forever.</p>
                      <p class="text-4xl font-bold my-2">$4.99</p>
-                     <button class="w-full mt-2 bg-indigo-600 text-white font-bold py-2 rounded-lg">Unlock Now</button>
+                     <button class="w-full mt-2 bg-yellow-500 text-black font-bold py-2 rounded-lg">Unlock Now</button>
                  </div>
             </div>
         </div>
@@ -207,36 +203,22 @@
 
     <script>
         // --- DOM Elements ---
-        const body = document.body;
-        const topicInput = document.getElementById('topic');
-        const generateBtn = document.getElementById('generateBtn');
-        const resultsDiv = document.getElementById('results');
-        const loader = document.getElementById('loader');
-        const errorMessage = document.getElementById('error-message');
-        const goPremiumBtn = document.getElementById('goPremiumBtn');
-        const premiumModal = document.getElementById('premiumModal');
-        const premiumCloseBtn = document.getElementById('premiumCloseBtn');
-        const savedIdeasList = document.getElementById('saved-ideas-list');
-        const generatorView = document.getElementById('generatorView');
-        const savedView = document.getElementById('savedView');
-        const generatorTab = document.getElementById('generatorTab');
-        const savedTab = document.getElementById('savedTab');
-        const chatModal = document.getElementById('chatModal');
-        const closeChatModalBtn = document.getElementById('closeChatModalBtn');
-        const chatHistory = document.getElementById('chat-history');
-        const chatInput = document.getElementById('chat-input');
-        const chatSendBtn = document.getElementById('chat-send-btn');
-        const newFolderBtn = document.getElementById('newFolderBtn');
-        const searchInput = document.getElementById('searchInput');
-        const folderFilter = document.getElementById('folderFilter');
-        const moveFolderModal = document.getElementById('moveFolderModal');
-        const moveFolderSelect = document.getElementById('moveFolderSelect');
-        const cancelMoveBtn = document.getElementById('cancelMoveBtn');
-        const confirmMoveBtn = document.getElementById('confirmMoveBtn');
-        const themeSwitcher = document.getElementById('themeSwitcher');
-        const folderColorModal = document.getElementById('folderColorModal');
-        const colorOptions = document.getElementById('color-options');
-        let changingColorFolderIndex = null;
+        const uiElements = {
+            body: document.body, topicInput: document.getElementById('topic'), generateBtn: document.getElementById('generateBtn'),
+            resultsDiv: document.getElementById('results'), loader: document.getElementById('loader'), errorMessage: document.getElementById('error-message'),
+            goPremiumBtn: document.getElementById('goPremiumBtn'), premiumModal: document.getElementById('premiumModal'),
+            premiumCloseBtn: document.getElementById('premiumCloseBtn'), savedIdeasList: document.getElementById('saved-ideas-list'),
+            generatorView: document.getElementById('generatorView'), savedView: document.getElementById('savedView'),
+            generatorTab: document.getElementById('generatorTab'), savedTab: document.getElementById('savedTab'),
+            chatModal: document.getElementById('chatModal'), closeChatModalBtn: document.getElementById('closeChatModalBtn'),
+            chatHistory: document.getElementById('chat-history'), chatInput: document.getElementById('chat-input'),
+            chatSendBtn: document.getElementById('chat-send-btn'), newFolderBtn: document.getElementById('newFolderBtn'),
+            searchInput: document.getElementById('searchInput'), folderFilter: document.getElementById('folderFilter'),
+            moveFolderModal: document.getElementById('moveFolderModal'), moveFolderSelect: document.getElementById('moveFolderSelect'),
+            cancelMoveBtn: document.getElementById('cancelMoveBtn'), confirmMoveBtn: document.getElementById('confirmMoveBtn'),
+            themeSwitcher: document.getElementById('themeSwitcher'), folderColorModal: document.getElementById('folderColorModal'),
+            colorOptions: document.getElementById('color-options'),
+        };
 
         // --- App State & Config ---
         const FREE_GENERATIONS_LIMIT = 5;
@@ -246,78 +228,111 @@
         let activeChat = { type: null, folderIndex: null, ideaIndex: null };
         let editing = { type: null, folderIndex: null, ideaIndex: null };
         let moving = { type: null, folderIndex: null, ideaIndex: null };
+        let changingColorFolderIndex = null;
         const FOLDER_COLORS = {
-            default: 'border-white/20',
-            red: 'border-red-500',
-            blue: 'border-blue-500',
-            green: 'border-green-500',
-            yellow: 'border-yellow-500',
-            purple: 'border-purple-500',
+            default: 'border-white/20', red: 'border-red-500', blue: 'border-blue-500',
+            green: 'border-green-500', yellow: 'border-yellow-500', purple: 'border-purple-500',
             pink: 'border-pink-500',
         };
 
-
         // --- Event Listeners ---
-        window.addEventListener('load', () => {
-            loadIdeasData();
-            const savedTheme = localStorage.getItem('ideaSparkTheme') || 'dark';
-            setTheme(savedTheme);
-        });
-        generateBtn.addEventListener('click', handleGeneration);
-        goPremiumBtn.addEventListener('click', () => premiumModal.classList.remove('hidden'));
-        premiumCloseBtn.addEventListener('click', () => premiumModal.classList.add('hidden'));
-        generatorTab.addEventListener('click', () => switchView('generator'));
-        savedTab.addEventListener('click', () => switchView('saved'));
-        closeChatModalBtn.addEventListener('click', () => chatModal.classList.add('hidden'));
-        chatSendBtn.addEventListener('click', handleChatSend);
-        chatInput.addEventListener('keypress', (e) => (e.key === 'Enter') && handleChatSend());
-        newFolderBtn.addEventListener('click', createNewFolder);
-        searchInput.addEventListener('input', () => renderSavedIdeas());
-        folderFilter.addEventListener('change', () => renderSavedIdeas());
-        cancelMoveBtn.addEventListener('click', () => moveFolderModal.classList.add('hidden'));
-        confirmMoveBtn.addEventListener('click', handleConfirmMove);
-        themeSwitcher.addEventListener('click', toggleTheme);
-        folderColorModal.addEventListener('click', (e) => (e.target === folderColorModal) && folderColorModal.classList.add('hidden'));
-
-        // --- Core Functions ---
+        function addEventListeners() {
+            window.addEventListener('load', () => {
+                loadIdeasData();
+                const savedTheme = localStorage.getItem('ideaSparkTheme') || 'dark';
+                setTheme(savedTheme);
+            });
+            uiElements.generateBtn.addEventListener('click', handleGeneration);
+            uiElements.goPremiumBtn.addEventListener('click', () => uiElements.premiumModal.classList.remove('hidden'));
+            uiElements.premiumCloseBtn.addEventListener('click', () => uiElements.premiumModal.classList.add('hidden'));
+            uiElements.generatorTab.addEventListener('click', () => switchView('generator'));
+            uiElements.savedTab.addEventListener('click', () => switchView('saved'));
+            uiElements.closeChatModalBtn.addEventListener('click', () => uiElements.chatModal.classList.add('hidden'));
+            uiElements.chatSendBtn.addEventListener('click', handleChatSend);
+            uiElements.chatInput.addEventListener('keypress', (e) => (e.key === 'Enter') && handleChatSend());
+            uiElements.newFolderBtn.addEventListener('click', createNewFolder);
+            uiElements.searchInput.addEventListener('input', () => renderSavedIdeas());
+            uiElements.folderFilter.addEventListener('change', () => renderSavedIdeas());
+            uiElements.cancelMoveBtn.addEventListener('click', () => uiElements.moveFolderModal.classList.add('hidden'));
+            uiElements.confirmMoveBtn.addEventListener('click', handleConfirmMove);
+            uiElements.themeSwitcher.addEventListener('click', toggleTheme);
+            uiElements.folderColorModal.addEventListener('click', (e) => (e.target === uiElements.folderColorModal) && uiElements.folderColorModal.classList.add('hidden'));
+        }
         
+        // --- Core Functions ---
         function switchView(viewName) {
-            editing = { type: null, folderIndex: null, ideaIndex: null }; // Exit edit mode
-            if (viewName === 'generator') {
-                generatorView.classList.remove('hidden');
-                savedView.classList.add('hidden');
-                generatorTab.classList.add('active');
-                savedTab.classList.remove('active');
-            } else {
-                generatorView.classList.add('hidden');
-                savedView.classList.remove('hidden');
-                generatorTab.classList.remove('active');
-                savedTab.classList.add('active');
-                renderSavedIdeas();
-            }
+            editing = { type: null, folderIndex: null, ideaIndex: null };
+            const isGenerator = viewName === 'generator';
+            uiElements.generatorView.classList.toggle('hidden', !isGenerator);
+            uiElements.savedView.classList.toggle('hidden', isGenerator);
+            uiElements.generatorTab.classList.toggle('active', isGenerator);
+            uiElements.savedTab.classList.toggle('active', !isGenerator);
+            if (!isGenerator) renderSavedIdeas();
         }
 
         async function handleGeneration() {
-            // ... (rest of the function is unchanged)
+            const topic = uiElements.topicInput.value.trim();
+            if (!topic) { showError("Please enter a topic first!"); return; }
+            if (generationCount >= FREE_GENERATIONS_LIMIT) {
+                showError("You've reached your free generation limit.");
+                uiElements.goPremiumBtn.classList.add('animate-pulse');
+                uiElements.premiumModal.classList.remove('hidden');
+                return;
+            }
+            uiElements.loader.classList.remove('hidden');
+            uiElements.resultsDiv.innerHTML = '';
+            uiElements.errorMessage.classList.add('hidden');
+            uiElements.generateBtn.disabled = true;
+            uiElements.generateBtn.innerText = 'Generating...';
+            try {
+                const ideas = await fetchIdeasFromAI(`Generate a numbered list of 5 creative and unique ideas for the following topic: "${topic}". Return only the numbered list, without any introductory text.`);
+                generatedIdeas = ideas.map(idea => ({
+                    originalIdea: idea.replace(/^\d+\.\s*/, ''),
+                    conversation: []
+                }));
+                displayGeneratedIdeas();
+                generationCount++;
+                updateGenerationStatus();
+            } catch (error) {
+                console.error("A detailed error occurred:", error);
+                showError("Sorry, we couldn't generate ideas right now. Please try again later.");
+            } finally {
+                uiElements.loader.classList.add('hidden');
+                uiElements.generateBtn.disabled = false;
+                uiElements.generateBtn.innerText = 'Generate Ideas';
+            }
         }
         
         async function fetchIdeasFromAI(prompt) {
-             // ... (rest of the function is unchanged)
+            const functionUrl = '/.netlify/functions/generate-ideas';
+            const response = await fetch(functionUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
+            if (!response.ok) throw new Error(`Serverless function failed with status ${response.status}`);
+            const data = await response.json();
+            if (data.ideas) return data.ideas;
+            throw new Error(data.error || "Invalid response from serverless function.");
         }
         
         // --- Data Persistence & Themes ---
         function loadIdeasData() {
-            const dataFromStorage = localStorage.getItem('ideaSparkData');
-            if (dataFromStorage) {
-                ideasData = JSON.parse(dataFromStorage);
-                // Ensure new properties exist for older data structures
-                if (!ideasData.favorites) ideasData.favorites = [];
-                ideasData.folders.forEach(f => {
-                    if (f.isCollapsed === undefined) f.isCollapsed = false;
-                    if (!f.color) f.color = 'default';
-                });
-            } else {
-                 ideasData = { folders: [], uncategorized: [], favorites: [] };
+            try {
+                const dataFromStorage = localStorage.getItem('ideaSparkData');
+                if (dataFromStorage) {
+                    ideasData = JSON.parse(dataFromStorage);
+                    if (!ideasData.favorites) ideasData.favorites = [];
+                    ideasData.folders.forEach(f => {
+                        if (f.isCollapsed === undefined) f.isCollapsed = false;
+                        if (!f.color) f.color = 'default';
+                    });
+                } else {
+                    ideasData = { folders: [], uncategorized: [], favorites: [] };
+                }
+            } catch(e) {
+                console.error("Failed to load or parse data from localStorage", e);
+                ideasData = { folders: [], uncategorized: [], favorites: [] };
             }
             populateFolderFilter();
             renderSavedIdeas();
@@ -326,93 +341,221 @@
         function saveData() {
             localStorage.setItem('ideaSparkData', JSON.stringify(ideasData));
             populateFolderFilter();
-            if (savedView.classList.contains('hidden')) {
-                displayGeneratedIdeas(); // Update save status on generator page
-            } else {
-                renderSavedIdeas(); // Update saved page
+            if (!uiElements.savedView.classList.contains('hidden')) {
+                renderSavedIdeas();
             }
         }
 
         function setTheme(themeName) {
-            body.dataset.theme = themeName;
+            uiElements.body.dataset.theme = themeName;
             localStorage.setItem('ideaSparkTheme', themeName);
         }
 
         function toggleTheme() {
-            const currentTheme = body.dataset.theme;
-            const newTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            const currentTheme = uiElements.body.dataset.theme || 'dark';
+            const ownedThemes = ['dark', 'light']; // Add purchased themes here, e.g., 'hacker'
+            let newTheme;
+            if (currentTheme === 'dark') {
+                newTheme = 'light';
+            } else if (currentTheme === 'light') {
+                if (ownedThemes.includes('hacker')) newTheme = 'hacker';
+                else newTheme = 'dark';
+            } else { // hacker or other themes
+                newTheme = 'dark';
+            }
             setTheme(newTheme);
         }
 
         // --- Folder, Search, Filter ---
-        // ... (createNewFolder, populateFolderFilter, openMoveModal, handleConfirmMove are mostly unchanged)
-        
-        // --- Idea Rendering and Interaction ---
+        function createNewFolder() {
+            const folderName = prompt("Enter a name for the new folder:");
+            if (folderName && !ideasData.folders.some(f => f.name === folderName)) {
+                ideasData.folders.push({ name: folderName, ideas: [], isCollapsed: false, color: 'default' });
+                saveData();
+            } else if (folderName) {
+                alert("A folder with that name already exists.");
+            }
+        }
 
+        function populateFolderFilter() {
+            const currentVal = uiElements.folderFilter.value;
+            uiElements.folderFilter.innerHTML = `<option value="all">All Folders</option><option value="favorites">Favorites</option>`;
+            ideasData.folders.forEach((folder, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = folder.name;
+                uiElements.folderFilter.appendChild(option);
+            });
+            uiElements.folderFilter.value = currentVal;
+        }
+        
+        function openMoveModal(type, ideaIndex, folderIndex = null) {
+            moving = { type, folderIndex, ideaIndex };
+            uiElements.moveFolderSelect.innerHTML = `<option value="uncategorized">Uncategorized</option>`;
+            ideasData.folders.forEach((folder, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = folder.name;
+                uiElements.moveFolderSelect.appendChild(option);
+            });
+            uiElements.moveFolderModal.classList.remove('hidden');
+        }
+
+        function handleConfirmMove() {
+            const { type, folderIndex, ideaIndex } = moving;
+            const targetFolderValue = uiElements.moveFolderSelect.value;
+            let ideaToMove;
+            if (type === 'uncategorized') ideaToMove = ideasData.uncategorized.splice(ideaIndex, 1)[0];
+            else if (type === 'favorite') ideaToMove = ideasData.favorites.splice(ideaIndex, 1)[0];
+            else ideaToMove = ideasData.folders[folderIndex].ideas.splice(ideaIndex, 1)[0];
+
+            if (targetFolderValue === 'uncategorized') ideasData.uncategorized.push(ideaToMove);
+            else ideasData.folders[targetFolderValue].ideas.push(ideaToMove);
+            
+            saveData();
+            uiElements.moveFolderModal.classList.add('hidden');
+        }
+
+        // --- Idea Card Creation and Rendering ---
         function createIdeaCard(ideaObj, ideaIndex, type, folderIndex = null) {
-            // ... (this function will now also handle favorite button logic)
+            const ideaElement = document.createElement('div');
+            ideaElement.className = 'glass-card p-4 rounded-lg flex flex-col gap-3';
+            const mainContent = document.createElement('div');
+            const isEditingThis = editing.type === type && editing.ideaIndex === ideaIndex && editing.folderIndex === folderIndex;
+
+            if (isEditingThis) {
+                const textarea = document.createElement('textarea');
+                textarea.value = ideaObj.originalIdea;
+                textarea.className = 'flex-grow w-full bg-white/20 border border-white/30 rounded-lg py-1 px-2 focus:outline-none';
+                textarea.rows = '1';
+                textarea.addEventListener('input', () => { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; });
+                setTimeout(() => { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; }, 0);
+                mainContent.appendChild(textarea);
+            } else {
+                mainContent.textContent = ideaObj.originalIdea;
+            }
+            ideaElement.appendChild(mainContent);
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'flex items-center gap-2 justify-end border-t border-white/10 pt-3 mt-3';
+
+            if(isEditingThis) {
+                 const saveBtn = document.createElement('button');
+                 saveBtn.className = 'bg-green-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-green-500/100 transition';
+                 saveBtn.innerHTML = `Save`;
+                 saveBtn.onclick = () => handleEditSave(ideaIndex, type, folderIndex);
+                 buttonContainer.appendChild(saveBtn);
+                 const cancelBtn = document.createElement('button');
+                 cancelBtn.className = 'bg-red-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-red-500/100 transition';
+                 cancelBtn.textContent = 'Cancel';
+                 cancelBtn.onclick = () => toggleEditMode(ideaIndex, type, folderIndex);
+                 buttonContainer.appendChild(cancelBtn);
+            } else {
+                const isFavorite = ideasData.favorites.some(fav => fav.originalIdea === ideaObj.originalIdea);
+                const favButton = document.createElement('button');
+                favButton.className = `p-2 rounded-full transition ${isFavorite ? 'text-yellow-400' : 'text-white/50 hover:text-white'}`;
+                favButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" ${isFavorite ? 'fill="currentColor"' : 'fill="none"'} stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+                favButton.onclick = () => toggleFavorite(ideaObj);
+                buttonContainer.appendChild(favButton);
+
+                if (type === 'generated') {
+                     const isSaved = ideasData.uncategorized.some(saved => saved.originalIdea === ideaObj.originalIdea) || ideasData.folders.some(f => f.ideas.some(saved => saved.originalIdea === ideaObj.originalIdea));
+                     const saveButton = document.createElement('button');
+                     saveButton.disabled = isSaved;
+                     saveButton.className = isSaved ? 'bg-indigo-500/50 text-white text-sm font-semibold py-1 px-3 rounded-full cursor-not-allowed' : 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition';
+                     saveButton.innerHTML = isSaved ? 'Saved' : `Save`;
+                     saveButton.onclick = () => saveGeneratedIdea(ideaIndex);
+                     buttonContainer.appendChild(saveButton);
+                } else {
+                    const moveBtn = document.createElement('button');
+                    moveBtn.className = 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition';
+                    moveBtn.innerHTML = `Move`;
+                    moveBtn.onclick = () => openMoveModal(type, ideaIndex, folderIndex);
+                    buttonContainer.appendChild(moveBtn);
+                }
+                
+                const chatButton = document.createElement('button');
+                chatButton.className = 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition';
+                chatButton.innerHTML = `Chat`;
+                chatButton.onclick = () => openChat(ideaIndex, type, folderIndex);
+                buttonContainer.appendChild(chatButton);
+
+                const editButton = document.createElement('button');
+                editButton.className = 'bg-white/10 text-white p-2 rounded-full hover:bg-white/30 transition';
+                editButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+                editButton.onclick = () => toggleEditMode(ideaIndex, type, folderIndex);
+                buttonContainer.appendChild(editButton);
+
+                if (type !== 'generated') {
+                     const deleteButton = document.createElement('button');
+                     deleteButton.className = 'bg-red-500/50 text-white p-2 rounded-full hover:bg-red-500/80 transition';
+                     deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                     deleteButton.onclick = () => deleteIdea(ideaIndex, type, folderIndex);
+                     buttonContainer.appendChild(deleteButton);
+                }
+            }
+            ideaElement.appendChild(buttonContainer);
+            return ideaElement;
+        }
+
+        function displayGeneratedIdeas() {
+            uiElements.resultsDiv.innerHTML = ''; 
+            generatedIdeas.forEach((ideaObj, index) => {
+                uiElements.resultsDiv.appendChild(createIdeaCard(ideaObj, index, 'generated'));
+            });
         }
         
         function renderSavedIdeas() {
-            savedIdeasList.innerHTML = '';
-            const searchTerm = searchInput.value.toLowerCase();
-            const selectedFolderValue = folderFilter.value;
+            uiElements.savedIdeasList.innerHTML = '';
+            const searchTerm = uiElements.searchInput.value.toLowerCase();
+            const selectedFolderValue = uiElements.folderFilter.value;
+            let foundItems = false;
 
-            // Always render favorites first if not filtering
-            if (selectedFolderValue === 'all' || selectedFolderValue === 'favorites') {
-                const favHeader = document.createElement('h3');
-                favHeader.className = 'text-lg font-bold border-b border-white/20 pb-1 mb-2 flex items-center gap-2';
-                favHeader.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="gold" stroke="gold" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Favorites`;
-                savedIdeasList.appendChild(favHeader);
-                const favoriteIdeas = ideasData.favorites.filter(idea => idea.originalIdea.toLowerCase().includes(searchTerm));
-                if (favoriteIdeas.length > 0) {
-                     favoriteIdeas.forEach((idea, index) => {
-                        savedIdeasList.appendChild(createIdeaCard(idea, index, 'favorite'));
-                     });
+            const renderSection = (title, ideaList, type, folderIndex = null) => {
+                const filteredList = ideaList.filter(idea => idea.originalIdea.toLowerCase().includes(searchTerm));
+                if(filteredList.length === 0) return;
+                foundItems = true;
+                const header = document.createElement('div');
+                if(type === 'folder'){
+                    const folder = ideasData.folders[folderIndex];
+                    header.className = `w-full text-left text-lg font-bold border-l-4 p-2 rounded-r-lg my-4 flex justify-between items-center transition cursor-pointer ${FOLDER_COLORS[folder.color] || FOLDER_COLORS.default}`;
+                    header.innerHTML = `<span>${folder.name}</span> <span class="transform transition-transform ${folder.isCollapsed ? '' : 'rotate-90'}">&#10148;</span>`;
+                    header.onclick = () => toggleFolder(folderIndex);
+                     const colorBtn = document.createElement('button');
+                     colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
+                     colorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a7 7 0 1 0 10 7"></path></svg>`;
+                     colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(folderIndex); };
+                     header.insertBefore(colorBtn, header.lastChild);
                 } else {
-                     savedIdeasList.innerHTML += `<p class="text-sm pl-2" style="color:var(--text-secondary)">No favorite ideas yet.</p>`;
+                    header.className = 'text-lg font-bold border-b border-white/20 pb-1 mb-2 flex items-center gap-2';
+                    header.innerHTML = title;
                 }
-            }
-            if (selectedFolderValue === 'favorites') return;
-
-
-            // Render other folders
-            ideasData.folders.forEach((folder, fIndex) => {
-                if (selectedFolderValue !== 'all' && selectedFolderValue != fIndex) return;
-
-                const folderContainer = document.createElement('div');
-                const folderHeader = document.createElement('button');
-                folderHeader.className = `w-full text-left text-lg font-bold border-l-4 p-2 rounded-r-lg my-4 flex justify-between items-center transition ${FOLDER_COLORS[folder.color] || FOLDER_COLORS.default}`;
-                folderHeader.innerHTML = `<span>${folder.name}</span> <span class="transform transition-transform ${folder.isCollapsed ? '' : 'rotate-90'}">&#10148;</span>`;
-                folderHeader.onclick = () => toggleFolder(fIndex);
+                uiElements.savedIdeasList.appendChild(header);
                 
-                const colorBtn = document.createElement('button');
-                colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
-                colorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a7 7 0 1 0 10 7"></path></svg>`;
-                colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(fIndex); };
-                folderHeader.querySelector('span:first-child').after(colorBtn);
-                
-                folderContainer.appendChild(folderHeader);
-
                 const ideaListContainer = document.createElement('div');
-                ideaListContainer.className = `pl-4 space-y-3 ${folder.isCollapsed ? 'hidden' : ''}`;
-                const filteredIdeas = folder.ideas.filter(idea => idea.originalIdea.toLowerCase().includes(searchTerm));
-                if (filteredIdeas.length > 0) {
-                    filteredIdeas.forEach(ideaObj => {
-                        const originalIndex = folder.ideas.findIndex(i => i === ideaObj);
-                        ideaListContainer.appendChild(createIdeaCard(ideaObj, originalIndex, 'folder', fIndex));
-                    });
-                } else {
-                    ideaListContainer.innerHTML = `<p class="text-sm" style="color:var(--text-secondary)">No ideas in this folder.</p>`;
-                }
-                folderContainer.appendChild(ideaListContainer);
-                savedIdeasList.appendChild(folderContainer);
-            });
+                ideaListContainer.className = `pl-4 space-y-3 ${type === 'folder' && ideasData.folders[folderIndex].isCollapsed ? 'hidden' : ''}`;
+                filteredList.forEach(ideaObj => {
+                    const originalIndex = ideaList.findIndex(i => i.originalIdea === ideaObj.originalIdea);
+                    ideaListContainer.appendChild(createIdeaCard(ideaObj, originalIndex, type, folderIndex));
+                });
+                uiElements.savedIdeasList.appendChild(ideaListContainer);
+            };
             
-             // Render uncategorized at the end
-             // ...
-        }
+            if (selectedFolderValue === 'all' || selectedFolderValue === 'favorites') {
+                renderSection(`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="gold" stroke="gold" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Favorites`, ideasData.favorites, 'favorite');
+            }
+            if (selectedFolderValue === 'all') {
+                ideasData.folders.forEach((folder, fIndex) => renderSection(folder.name, folder.ideas, 'folder', fIndex));
+                renderSection('Uncategorized', ideasData.uncategorized, 'uncategorized');
+            } else if (selectedFolderValue !== 'favorites') {
+                renderSection(ideasData.folders[selectedFolderValue].name, ideasData.folders[selectedFolderValue].ideas, 'folder', selectedFolderValue);
+            }
 
+            if (!foundItems && uiElements.savedIdeasList.innerHTML === '') {
+                 uiElements.savedIdeasList.innerHTML = `<p class="text-center" style="color:var(--text-secondary)">No ideas found.</p>`;
+            }
+        }
+        
         function toggleFolder(folderIndex) {
             ideasData.folders[folderIndex].isCollapsed = !ideasData.folders[folderIndex].isCollapsed;
             saveData();
@@ -420,21 +563,21 @@
 
         function openColorModal(folderIndex) {
             changingColorFolderIndex = folderIndex;
-            colorOptions.innerHTML = '';
+            uiElements.colorOptions.innerHTML = '';
             Object.keys(FOLDER_COLORS).forEach(color => {
                 const colorDiv = document.createElement('div');
                 colorDiv.className = `w-12 h-12 rounded-full cursor-pointer border-4 ${FOLDER_COLORS[color]}`;
                 colorDiv.onclick = () => setFolderColor(color);
-                colorOptions.appendChild(colorDiv);
+                uiElements.colorOptions.appendChild(colorDiv);
             });
-            folderColorModal.classList.remove('hidden');
+            uiElements.folderColorModal.classList.remove('hidden');
         }
 
         function setFolderColor(color) {
             if (changingColorFolderIndex !== null) {
                 ideasData.folders[changingColorFolderIndex].color = color;
                 saveData();
-                folderColorModal.classList.add('hidden');
+                uiElements.folderColorModal.classList.add('hidden');
                 changingColorFolderIndex = null;
             }
         }
@@ -444,37 +587,171 @@
             if (favIndex > -1) {
                 ideasData.favorites.splice(favIndex, 1);
             } else {
-                ideasData.favorites.push(ideaObj);
+                const uniqueIdea = { ...ideaObj }; // Create a copy to avoid reference issues
+                ideasData.favorites.push(uniqueIdea);
             }
             saveData();
         }
 
-        // --- Other functions (handleEditSave, openChat, etc.) need to be updated to handle the new data structure. ---
-        // ... This would involve passing the correct indices and types to identify the idea object correctly within the nested ideasData structure.
-        // For brevity, the full logic for every single function update isn't written out here, but the stubs and key logic changes are present.
-        
-        // ... The rest of the script, with necessary modifications to handle the new `ideasData` structure in `handleEditSave`, `openChat`, `handleChatSend`, `deleteIdea`, `toggleEditMode`, and `saveGeneratedIdea`.
-        
-    </script>
-    <script>
-        // The rest of your script, with all the existing functions, updated to handle the new data structures.
-        // For example, deleteIdea would now look something like this:
-        function deleteIdea(ideaIndex, type, folderIndex = null) {
-            if (type === 'favorite') {
-                ideasData.favorites.splice(ideaIndex, 1);
-            } else if (type === 'folder') {
-                ideasData.folders[folderIndex].ideas.splice(ideaIndex, 1);
-            } else { // uncategorized
-                ideasData.uncategorized.splice(ideaIndex, 1);
+        function saveGeneratedIdea(index) {
+            const ideaToSave = generatedIdeas[index];
+            const isAlreadySaved = ideasData.uncategorized.some(saved => saved.originalIdea === ideaToSave.originalIdea) || ideasData.folders.some(f => f.ideas.some(saved => saved.originalIdea === ideaToSave.originalIdea));
+            if (!isAlreadySaved) {
+                ideasData.uncategorized.push({ ...ideaToSave });
+                saveData();
+                displayGeneratedIdeas(); // Re-render to update button states
             }
+        }
+        
+        function deleteIdea(ideaIndex, type, folderIndex = null) {
+            let sourceArray;
+            if (type === 'favorite') sourceArray = ideasData.favorites;
+            else if (type === 'uncategorized') sourceArray = ideasData.uncategorized;
+            else sourceArray = ideasData.folders[folderIndex].ideas;
+            sourceArray.splice(ideaIndex, 1);
             saveData();
         }
-        // Similar logic adjustments are needed for all functions that interact with a single idea.
+
+        function toggleEditMode(ideaIndex, type, folderIndex = null) {
+            if (editing.ideaIndex === ideaIndex && editing.type === type && editing.folderIndex === folderIndex) {
+                editing = { type: null, folderIndex: null, ideaIndex: null };
+            } else {
+                editing = { type, folderIndex, ideaIndex };
+            }
+            if (type === 'generated') displayGeneratedIdeas();
+            else renderSavedIdeas();
+        }
+        
+        function handleEditSave(ideaIndex, type, folderIndex = null) {
+            let sourceArray;
+            if (type === 'generated') sourceArray = generatedIdeas;
+            else if (type === 'uncategorized') sourceArray = ideasData.uncategorized;
+            else if (type === 'favorite') sourceArray = ideasData.favorites;
+            else sourceArray = ideasData.folders[folderIndex].ideas;
+            
+            const textarea = document.querySelector('.glass-card textarea');
+            if (textarea) {
+                sourceArray[ideaIndex].originalIdea = textarea.value;
+                editing = { type: null, folderIndex: null, ideaIndex: null };
+                if (type === 'generated') {
+                    displayGeneratedIdeas();
+                } else {
+                    saveData();
+                }
+            }
+        }
+
+        function openChat(ideaIndex, type, folderIndex = null) {
+            activeChat = { type, folderIndex, ideaIndex };
+
+            if (type === 'generated') {
+                const ideaToOpen = generatedIdeas[ideaIndex];
+                const savedIdea = ideasData.uncategorized.find(i => i.originalIdea === ideaToOpen.originalIdea) || 
+                                  ideasData.folders.flatMap(f => f.ideas).find(i => i.originalIdea === ideaToOpen.originalIdea);
+
+                if (!savedIdea) {
+                    saveGeneratedIdea(ideaIndex);
+                    activeChat.index = ideasData.uncategorized.length - 1;
+                    activeChat.type = 'uncategorized';
+                    activeChat.folderIndex = null;
+                } else {
+                     // Find the already saved idea's location
+                     for(let i=0; i < ideasData.folders.length; i++){
+                         let foundIndex = ideasData.folders[i].ideas.findIndex(idea => idea.originalIdea === ideaToOpen.originalIdea);
+                         if(foundIndex > -1){
+                             activeChat = { type: 'folder', folderIndex: i, ideaIndex: foundIndex };
+                             break;
+                         }
+                     }
+                     if(activeChat.type === 'generated'){ // If not found in folders, check uncategorized
+                        let foundIndex = ideasData.uncategorized.findIndex(idea => idea.originalIdea === ideaToOpen.originalIdea);
+                        activeChat = { type: 'uncategorized', folderIndex: null, ideaIndex: foundIndex };
+                     }
+                }
+            }
+            
+            renderChatHistory();
+            uiElements.chatModal.classList.remove('hidden');
+        }
+
+        function renderChatHistory() {
+            uiElements.chatHistory.innerHTML = '';
+            const { type, folderIndex, ideaIndex } = activeChat;
+            if (ideaIndex === null) return;
+            
+            let ideaObj;
+            if (type === 'uncategorized') ideaObj = ideasData.uncategorized[ideaIndex];
+            else if (type === 'favorite') ideaObj = ideasData.favorites[ideaIndex];
+            else ideaObj = ideasData.folders[folderIndex].ideas[ideaIndex];
+
+            const originalIdeaBubble = document.createElement('div');
+            originalIdeaBubble.className = 'chat-bubble chat-bubble-ai';
+            originalIdeaBubble.innerHTML = `<p class="font-bold mb-1">Original Idea</p><p>${ideaObj.originalIdea}</p>`;
+            uiElements.chatHistory.appendChild(originalIdeaBubble);
+            ideaObj.conversation.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = `chat-bubble ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`;
+                bubble.textContent = msg.text;
+                uiElements.chatHistory.appendChild(bubble);
+            });
+            uiElements.chatHistory.scrollTop = uiElements.chatHistory.scrollHeight;
+        }
+
+        async function handleChatSend() {
+            const userInput = uiElements.chatInput.value.trim();
+            const { type, folderIndex, ideaIndex } = activeChat;
+            if (!userInput || ideaIndex === null) return;
+            
+            let ideaObj;
+            if (type === 'uncategorized') ideaObj = ideasData.uncategorized[ideaIndex];
+            else if (type === 'favorite') ideaObj = ideasData.favorites[ideaIndex];
+            else ideaObj = ideasData.folders[folderIndex].ideas[ideaIndex];
+
+            ideaObj.conversation.push({ role: 'user', text: userInput });
+            renderChatHistory();
+            uiElements.chatInput.value = '';
+
+            let conversationPrompt = `The original idea was: "${ideaObj.originalIdea}".\n\nPrevious conversation:\n`;
+            ideaObj.conversation.forEach(msg => {
+                conversationPrompt += `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.text}\n`;
+            });
+            conversationPrompt += `\nBased on this, respond to the latest user message. Generate only the direct response.`;
+            try {
+                const responseIdeas = await fetchIdeasFromAI(conversationPrompt);
+                const aiResponse = responseIdeas.join('\n');
+                ideaObj.conversation.push({ role: 'ai', text: aiResponse });
+                saveData();
+                renderChatHistory();
+            } catch (error) {
+                console.error("Chat generation error:", error);
+                const errorBubble = document.createElement('div');
+                errorBubble.className = 'chat-bubble chat-bubble-ai bg-red-500/50';
+                errorBubble.textContent = "Sorry, I couldn't generate a response.";
+                uiElements.chatHistory.appendChild(errorBubble);
+            }
+        }
+
+        function showError(message) {
+            uiElements.errorMessage.textContent = message;
+            uiElements.errorMessage.classList.remove('hidden');
+            uiElements.resultsDiv.innerHTML = ''; 
+        }
+        
+        function updateGenerationStatus() {
+            const remaining = FREE_GENERATIONS_LIMIT - generationCount;
+            const topicInput = uiElements.topicInput;
+            const generateBtn = uiElements.generateBtn;
+            if (remaining > 0) {
+                topicInput.placeholder = `You have ${remaining} free generations left.`;
+            } else {
+                topicInput.placeholder = 'Upgrade to Premium for more ideas!';
+                topicInput.disabled = true;
+                generateBtn.disabled = true;
+                generateBtn.innerText = 'Limit Reached';
+            }
+        }
+        
+        addEventListeners();
     </script>
 </body>
 </html>
-```
-
-For this major update, here is a suitable commit message:
-
-`feat: Add collapsible folders, favorites, and theme engi
