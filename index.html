@@ -21,21 +21,39 @@
         .tab.active {
             background-color: rgba(255, 255, 255, 0.2);
         }
+        /* Chat bubble styles */
+        .chat-bubble-user {
+            background-color: rgba(255, 255, 255, 0.2);
+            align-self: flex-end;
+        }
+        .chat-bubble-ai {
+            background-color: rgba(0, 0, 0, 0.2);
+            align-self: flex-start;
+        }
     </style>
 </head>
-<body class="gradient-bg text-white min-h-screen flex flex-col justify-between p-4">
+<body class="gradient-bg text-white min-h-screen flex flex-col p-4">
+
+    <!-- Header -->
+    <header class="text-center mb-6">
+        <h1 class="text-4xl font-bold">Idea Spark ✨</h1>
+        <p class="text-indigo-200 mt-2">Your personal AI brainstorming partner</p>
+    </header>
 
     <!-- Main Content Area -->
     <div class="w-full max-w-md mx-auto flex-grow">
         
+        <!-- Top Tab Menu -->
+        <nav class="w-full glass-card rounded-full p-2 mb-6">
+            <div class="flex justify-around">
+                <button id="generatorTab" class="tab active flex-1 text-center font-semibold py-2 px-4 rounded-full transition">Generator</button>
+                <button id="savedTab" class="tab flex-1 text-center font-semibold py-2 px-4 rounded-full transition">Saved</button>
+            </div>
+        </nav>
+
         <!-- Generator View -->
         <div id="generatorView">
             <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8">
-                <header class="text-center mb-6">
-                    <h1 class="text-4xl font-bold">Idea Spark ✨</h1>
-                    <p class="text-indigo-200 mt-2">Your personal AI brainstorming partner</p>
-                </header>
-
                 <main>
                     <div class="mb-4">
                         <label for="topic" class="block text-sm font-medium text-indigo-200 mb-2">What topic do you need ideas for?</label>
@@ -82,13 +100,24 @@
         </div>
     </div>
 
-    <!-- Bottom Tab Menu -->
-    <nav class="w-full max-w-md mx-auto glass-card rounded-full p-2 mt-4">
-        <div class="flex justify-around">
-            <button id="generatorTab" class="tab active flex-1 text-center font-semibold py-2 px-4 rounded-full transition">Generator</button>
-            <button id="savedTab" class="tab flex-1 text-center font-semibold py-2 px-4 rounded-full transition">Saved</button>
+    <!-- Chat Modal -->
+    <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Refine Idea</h2>
+                <button id="closeChatModalBtn" class="text-white/70 hover:text-white">&times;</button>
+            </div>
+            <div id="chat-history" class="flex-grow overflow-y-auto p-2 space-y-4">
+                <!-- Chat messages will be injected here -->
+            </div>
+            <div class="mt-4 flex items-center">
+                <input type="text" id="chat-input" class="flex-grow bg-white/20 border border-white/30 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" placeholder="e.g., 'make it shorter'">
+                <button id="chat-send-btn" class="ml-2 bg-indigo-500 text-white rounded-lg p-2 hover:bg-indigo-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
         </div>
-    </nav>
+    </div>
 
 
     <!-- Premium Modal -->
@@ -117,30 +146,33 @@
         const premiumModal = document.getElementById('premiumModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
         const savedIdeasList = document.getElementById('saved-ideas-list');
-        // Views & Tabs
         const generatorView = document.getElementById('generatorView');
         const savedView = document.getElementById('savedView');
         const generatorTab = document.getElementById('generatorTab');
         const savedTab = document.getElementById('savedTab');
+        const chatModal = document.getElementById('chatModal');
+        const closeChatModalBtn = document.getElementById('closeChatModalBtn');
+        const chatHistory = document.getElementById('chat-history');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
 
         // --- App State & Config ---
         const FREE_GENERATIONS_LIMIT = 5;
         let generationCount = 0;
         let savedIdeas = [];
+        let activeChatIndex = null;
 
         // --- Event Listeners ---
         window.addEventListener('load', loadSavedIdeas);
         generateBtn.addEventListener('click', handleGeneration);
         goPremiumBtn.addEventListener('click', () => premiumModal.classList.remove('hidden'));
         closeModalBtn.addEventListener('click', () => premiumModal.classList.add('hidden'));
-        premiumModal.addEventListener('click', (e) => {
-            if (e.target === premiumModal) {
-                premiumModal.classList.add('hidden');
-            }
-        });
-        // Tab listeners
+        premiumModal.addEventListener('click', (e) => (e.target === premiumModal) && premiumModal.classList.add('hidden'));
         generatorTab.addEventListener('click', () => switchView('generator'));
         savedTab.addEventListener('click', () => switchView('saved'));
+        closeChatModalBtn.addEventListener('click', () => chatModal.classList.add('hidden'));
+        chatSendBtn.addEventListener('click', handleChatSend);
+        chatInput.addEventListener('keypress', (e) => (e.key === 'Enter') && handleChatSend());
 
 
         // --- Core Functions ---
@@ -156,24 +188,21 @@
                 savedView.classList.remove('hidden');
                 generatorTab.classList.remove('active');
                 savedTab.classList.add('active');
-                renderSavedIdeas(); // Re-render in case ideas were saved/deleted
+                renderSavedIdeas();
             }
         }
 
         async function handleGeneration() {
             const topic = topicInput.value.trim();
             if (!topic) {
-                showError("Please enter a topic first!");
-                return;
+                showError("Please enter a topic first!"); return;
             }
-
             if (generationCount >= FREE_GENERATIONS_LIMIT) {
                 showError("You've reached your free generation limit.");
                 goPremiumBtn.classList.add('animate-pulse');
                 premiumModal.classList.remove('hidden');
                 return;
             }
-
             loader.classList.remove('hidden');
             resultsDiv.innerHTML = '';
             errorMessage.classList.add('hidden');
@@ -181,7 +210,7 @@
             generateBtn.innerText = 'Generating...';
             
             try {
-                const ideas = await fetchIdeasFromAI(topic);
+                const ideas = await fetchIdeasFromAI(`Generate a numbered list of 5 creative and unique ideas for the following topic: "${topic}". Return only the numbered list, without any introductory text.`);
                 displayResults(ideas);
                 generationCount++;
                 updateGenerationStatus();
@@ -197,42 +226,29 @@
         
         async function fetchIdeasFromAI(prompt) {
             const functionUrl = '/.netlify/functions/generate-ideas';
-
             const response = await fetch(functionUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: prompt })
+                body: JSON.stringify({ prompt })
             });
-
-            if (!response.ok) {
-                throw new Error(`Serverless function failed with status ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`Serverless function failed with status ${response.status}`);
             const data = await response.json();
-            
-            if (data.ideas) {
-                 return data.ideas;
-            } else {
-                throw new Error(data.error || "Invalid response from serverless function.");
-            }
+            if (data.ideas) return data.ideas;
+            throw new Error(data.error || "Invalid response from serverless function.");
         }
 
         function displayResults(ideas) {
             resultsDiv.innerHTML = ''; 
             ideas.forEach(ideaText => {
                 const cleanIdeaText = ideaText.replace(/^\d+\.\s*/, '');
-                
                 const ideaElement = document.createElement('div');
                 ideaElement.className = 'glass-card p-3 rounded-lg flex justify-between items-center';
-
                 const textSpan = document.createElement('span');
                 textSpan.textContent = cleanIdeaText;
                 textSpan.className = 'mr-2';
                 ideaElement.appendChild(textSpan);
-
                 const saveButton = document.createElement('button');
-                const isAlreadySaved = savedIdeas.includes(cleanIdeaText);
-
+                const isAlreadySaved = savedIdeas.some(ideaObj => ideaObj.originalIdea === cleanIdeaText);
                 if (isAlreadySaved) {
                     saveButton.textContent = 'Saved!';
                     saveButton.disabled = true;
@@ -244,10 +260,9 @@
                         saveIdea(cleanIdeaText);
                         saveButton.textContent = 'Saved!';
                         saveButton.disabled = true;
-                         saveButton.className = 'bg-indigo-500/50 text-white text-sm font-semibold py-1 px-3 rounded-full cursor-not-allowed';
+                        saveButton.className = 'bg-indigo-500/50 text-white text-sm font-semibold py-1 px-3 rounded-full cursor-not-allowed';
                     };
                 }
-                
                 ideaElement.appendChild(saveButton);
                 resultsDiv.appendChild(ideaElement);
             });
@@ -255,15 +270,13 @@
         
         function loadSavedIdeas() {
             const ideasFromStorage = localStorage.getItem('ideaSparkSavedIdeas');
-            if (ideasFromStorage) {
-                savedIdeas = JSON.parse(ideasFromStorage);
-            }
+            savedIdeas = ideasFromStorage ? JSON.parse(ideasFromStorage) : [];
             renderSavedIdeas();
         }
 
         function saveIdea(ideaText) {
-            if (!savedIdeas.includes(ideaText)) {
-                savedIdeas.push(ideaText);
+            if (!savedIdeas.some(idea => idea.originalIdea === ideaText)) {
+                savedIdeas.push({ originalIdea: ideaText, conversation: [] });
                 localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
             }
         }
@@ -271,36 +284,87 @@
         function deleteIdea(index) {
             savedIdeas.splice(index, 1);
             localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
-            renderSavedIdeas(); // Re-render the list after deletion
+            renderSavedIdeas();
         }
 
         function renderSavedIdeas() {
             savedIdeasList.innerHTML = '';
-
             if (savedIdeas.length === 0) {
                  savedIdeasList.innerHTML = `<p class="text-center text-indigo-200">You haven't saved any ideas yet.</p>`;
                 return;
             }
-            
-            savedIdeas.forEach((ideaText, index) => {
+            savedIdeas.forEach((ideaObj, index) => {
                 const ideaElement = document.createElement('div');
                 ideaElement.className = 'glass-card p-4 rounded-lg flex justify-between items-center';
-                
-                const textSpan = document.createElement('span');
-                textSpan.textContent = ideaText;
-                textSpan.className = 'mr-2';
-                ideaElement.appendChild(textSpan);
-
+                const textButton = document.createElement('button');
+                textButton.textContent = ideaObj.originalIdea;
+                textButton.className = 'mr-2 text-left flex-grow hover:text-indigo-300';
+                textButton.onclick = () => openChat(index);
+                ideaElement.appendChild(textButton);
                 const deleteButton = document.createElement('button');
                 deleteButton.innerHTML = '&times;';
-                deleteButton.className = 'bg-red-500/50 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold hover:bg-red-500/80 transition';
+                deleteButton.className = 'bg-red-500/50 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold hover:bg-red-500/80 transition flex-shrink-0';
                 deleteButton.onclick = () => deleteIdea(index);
                 ideaElement.appendChild(deleteButton);
-
                 savedIdeasList.appendChild(ideaElement);
             });
         }
 
+        function openChat(index) {
+            activeChatIndex = index;
+            renderChatHistory();
+            chatModal.classList.remove('hidden');
+        }
+
+        function renderChatHistory() {
+            chatHistory.innerHTML = '';
+            const ideaObj = savedIdeas[activeChatIndex];
+            
+            const originalIdeaBubble = document.createElement('div');
+            originalIdeaBubble.className = 'chat-bubble-ai p-3 rounded-lg max-w-xs md:max-w-md';
+            originalIdeaBubble.innerHTML = `<p class="font-bold mb-1">Original Idea</p><p>${ideaObj.originalIdea}</p>`;
+            chatHistory.appendChild(originalIdeaBubble);
+
+            ideaObj.conversation.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = `p-3 rounded-lg max-w-xs md:max-w-md ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`;
+                bubble.textContent = msg.text;
+                chatHistory.appendChild(bubble);
+            });
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        async function handleChatSend() {
+            const userInput = chatInput.value.trim();
+            if (!userInput || activeChatIndex === null) return;
+            
+            // Add user message to conversation and render it
+            savedIdeas[activeChatIndex].conversation.push({ role: 'user', text: userInput });
+            renderChatHistory();
+            chatInput.value = '';
+
+            // Construct prompt and call AI
+            const ideaObj = savedIdeas[activeChatIndex];
+            let conversationPrompt = `The original idea was: "${ideaObj.originalIdea}".\n\nPrevious conversation:\n`;
+            ideaObj.conversation.forEach(msg => {
+                conversationPrompt += `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.text}\n`;
+            });
+            conversationPrompt += `\nBased on this, respond to the latest user message. Generate only the direct response.`;
+            
+            try {
+                const responseIdeas = await fetchIdeasFromAI(conversationPrompt);
+                const aiResponse = responseIdeas.join('\n'); // Join if AI returns multiple lines
+                savedIdeas[activeChatIndex].conversation.push({ role: 'ai', text: aiResponse });
+                localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
+                renderChatHistory();
+            } catch (error) {
+                console.error("Chat generation error:", error);
+                const errorBubble = document.createElement('div');
+                errorBubble.className = 'chat-bubble-ai p-3 rounded-lg max-w-xs md:max-w-md bg-red-500/50';
+                errorBubble.textContent = "Sorry, I couldn't generate a response.";
+                chatHistory.appendChild(errorBubble);
+            }
+        }
 
         function showError(message) {
             errorMessage.textContent = message;
