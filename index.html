@@ -64,6 +64,17 @@
             </main>
         </div>
         
+        <!-- *** NEW: Saved Ideas Section *** -->
+        <div id="saved-ideas-section" class="mt-8 hidden">
+             <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-4 text-center">Saved Ideas 📌</h2>
+                <div id="saved-ideas-list" class="space-y-3">
+                    <!-- Saved ideas will be injected here -->
+                </div>
+            </div>
+        </div>
+
+
         <!-- Premium Offer Card -->
         <div class="text-center mt-6">
             <button id="goPremiumBtn" class="bg-yellow-400 text-gray-900 font-bold py-2 px-6 rounded-full hover:bg-yellow-300 transition-all shadow-lg transform hover:scale-105">
@@ -97,12 +108,19 @@
         const goPremiumBtn = document.getElementById('goPremiumBtn');
         const premiumModal = document.getElementById('premiumModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
+        // *** NEW ***
+        const savedIdeasSection = document.getElementById('saved-ideas-section');
+        const savedIdeasList = document.getElementById('saved-ideas-list');
 
         // --- App State & Config ---
         const FREE_GENERATIONS_LIMIT = 5;
         let generationCount = 0;
+        let savedIdeas = []; // *** NEW ***
 
         // --- Event Listeners ---
+        window.addEventListener('load', () => { // *** NEW ***
+            loadSavedIdeas();
+        });
         generateBtn.addEventListener('click', handleGeneration);
         goPremiumBtn.addEventListener('click', () => premiumModal.classList.remove('hidden'));
         closeModalBtn.addEventListener('click', () => premiumModal.classList.add('hidden'));
@@ -149,21 +167,13 @@
             }
         }
         
-        /**
-         * Fetches ideas by calling our own secure serverless function.
-         * The function then calls the Google AI API with the secure key.
-         * @param {string} prompt The user's input topic.
-         */
         async function fetchIdeasFromAI(prompt) {
-            // This is the URL for our secure Netlify Function
             const functionUrl = '/.netlify/functions/generate-ideas';
 
             const response = await fetch(functionUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ prompt: prompt }) // Send the prompt to our function
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt })
             });
 
             if (!response.ok) {
@@ -180,19 +190,85 @@
         }
 
         function displayResults(ideas) {
-            resultsDiv.innerHTML = ''; // Clear previous results
-            ideas.forEach(idea => {
+            resultsDiv.innerHTML = ''; 
+            ideas.forEach(ideaText => {
+                const cleanIdeaText = ideaText.replace(/^\d+\.\s*/, '');
+                
                 const ideaElement = document.createElement('div');
-                ideaElement.className = 'glass-card p-4 rounded-lg text-sm transition-transform transform hover:scale-105';
-                ideaElement.textContent = idea.replace(/^\d+\.\s*/, '');
+                ideaElement.className = 'glass-card p-4 rounded-lg flex justify-between items-center';
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = cleanIdeaText;
+                ideaElement.appendChild(textSpan);
+
+                // *** NEW: Save button for each idea ***
+                const saveButton = document.createElement('button');
+                saveButton.innerHTML = '&#43;'; // Plus sign icon
+                saveButton.className = 'bg-white/20 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold hover:bg-white/40 transition';
+                saveButton.onclick = () => saveIdea(cleanIdeaText);
+                ideaElement.appendChild(saveButton);
+
                 resultsDiv.appendChild(ideaElement);
             });
         }
+        
+        // *** NEW: Functions for saving, loading, and deleting ideas ***
+
+        function loadSavedIdeas() {
+            const ideasFromStorage = localStorage.getItem('ideaSparkSavedIdeas');
+            if (ideasFromStorage) {
+                savedIdeas = JSON.parse(ideasFromStorage);
+            }
+            renderSavedIdeas();
+        }
+
+        function saveIdea(ideaText) {
+            if (!savedIdeas.includes(ideaText)) {
+                savedIdeas.push(ideaText);
+                localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
+                renderSavedIdeas();
+            }
+        }
+
+        function deleteIdea(index) {
+            savedIdeas.splice(index, 1);
+            localStorage.setItem('ideaSparkSavedIdeas', JSON.stringify(savedIdeas));
+            renderSavedIdeas();
+        }
+
+        function renderSavedIdeas() {
+            savedIdeasList.innerHTML = '';
+
+            if (savedIdeas.length === 0) {
+                savedIdeasSection.classList.add('hidden');
+                return;
+            }
+
+            savedIdeasSection.classList.remove('hidden');
+
+            savedIdeas.forEach((ideaText, index) => {
+                const ideaElement = document.createElement('div');
+                ideaElement.className = 'glass-card p-4 rounded-lg flex justify-between items-center';
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = ideaText;
+                ideaElement.appendChild(textSpan);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = '&times;'; // Cross sign icon
+                deleteButton.className = 'bg-red-500/50 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold hover:bg-red-500/80 transition';
+                deleteButton.onclick = () => deleteIdea(index);
+                ideaElement.appendChild(deleteButton);
+
+                savedIdeasList.appendChild(ideaElement);
+            });
+        }
+
 
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.classList.remove('hidden');
-            resultsDiv.innerHTML = ''; // Clear any existing results
+            resultsDiv.innerHTML = ''; 
         }
         
         function updateGenerationStatus() {
