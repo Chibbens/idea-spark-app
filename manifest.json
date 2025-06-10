@@ -1,0 +1,16 @@
+{
+    "name": "Idea Spark",
+    "short_name": "IdeaSpark",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#667eea",
+    "theme_color": "#667eea",
+    "description": "Your personal AI brainstorming partner.",
+    "icons": [
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

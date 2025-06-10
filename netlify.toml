@@ -1,0 +1,6 @@
+# This is a Netlify configuration file.
+# It tells Netlify how to build and deploy your site.
+
+[build]
+  # This tells Netlify where your serverless functions are located.
+  functions = "netlify/functions/"
