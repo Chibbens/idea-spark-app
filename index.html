@@ -235,8 +235,8 @@
         };
 
         // --- App State & Config ---
-        let ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'] };
-        let activeFolder = 'all'; // 'all', 'favorites', or folder index
+        let ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'], trash: [] };
+        let activeFolder = 'all'; // 'all', 'favorites', 'trash', or folder index
         let generatedIdeas = [];
         let editing = { ideaId: null };
         let activeChat = { ideaId: null };
@@ -281,6 +281,7 @@
                 uiElements[`${v}Tab`].classList.toggle('active', v === viewName);
             });
             if (viewName === 'saved') {
+                activeFolder = 'all'; // Default to 'all' when switching to saved tab
                 renderFolderList();
                 renderSavedIdeas();
             } else if (viewName === 'themes') {
@@ -332,7 +333,7 @@
         // --- Data Persistence & Themes ---
         function loadIdeasData() {
             try {
-                const data = localStorage.getItem('ideaSparkData_v3');
+                const data = localStorage.getItem('ideaSparkData_v4');
                 if (data) {
                     const parsedData = JSON.parse(data);
                     // Ensure all new properties exist for older data structures
@@ -340,17 +341,18 @@
                     ideasData.uncategorized = parsedData.uncategorized || [];
                     ideasData.favoriteIDs = parsedData.favoriteIDs || [];
                     ideasData.ownedThemes = parsedData.ownedThemes || ['classic', 'light', 'dark'];
+                    ideasData.trash = parsedData.trash || [];
                 } else {
-                    ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'] };
+                    ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'], trash: [] };
                 }
             } catch (e) {
                 console.error("Failed to load data, resetting.", e);
-                ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'] };
+                ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'], trash: [] };
             }
         }
 
         function saveData() {
-            localStorage.setItem('ideaSparkData_v3', JSON.stringify(ideasData));
+            localStorage.setItem('ideaSparkData_v4', JSON.stringify(ideasData));
             if (!uiElements.savedView.classList.contains('hidden')) {
                 renderFolderList();
                 renderSavedIdeas();
@@ -368,7 +370,6 @@
             uiElements.body.dataset.theme = themeName;
             localStorage.setItem('ideaSparkTheme', themeName);
         }
-
         function toggleTheme() {
             const themes = ideasData.ownedThemes;
             const currentTheme = uiElements.body.dataset.theme || 'classic';
@@ -376,6 +377,7 @@
             const nextIndex = (currentIndex + 1) % themes.length;
             setTheme(themes[nextIndex]);
         }
+
         // --- Folder, Search, Filter & Idea Actions ---
         function createNewFolder() {
             const folderName = prompt("Enter a name for the new folder:");
@@ -400,24 +402,15 @@
         }
 
         function handleConfirmMove() {
-            const ideaObj = findIdeaById(moving.ideaId);
-            if (!ideaObj) return;
-
-            const oldLocation = findIdeaLocation(moving.ideaId);
-            let ideaToMove;
-            if (oldLocation.type === 'uncategorized') {
-                ideaToMove = ideasData.uncategorized.splice(oldLocation.ideaIndex, 1)[0];
-            } else if (oldLocation.type === 'folder') {
-                ideaToMove = ideasData.folders[oldLocation.folderIndex].ideas.splice(oldLocation.ideaIndex, 1)[0];
-            }
-            
+            if (!moving.ideaId) return;
+            const ideaToMove = findAndRemoveIdea(moving.ideaId);
             if (!ideaToMove) return;
 
             const targetFolderValue = uiElements.moveFolderSelect.value;
             if (targetFolderValue === 'uncategorized') {
-                ideasData.uncategorized.push(ideaToMove);
+                ideasData.uncategorized.unshift(ideaToMove);
             } else {
-                ideasData.folders[targetFolderValue].ideas.push(ideaToMove);
+                ideasData.folders[targetFolderValue].ideas.unshift(ideaToMove);
             }
             
             saveData();
@@ -459,7 +452,7 @@
                      const ideaToSave = generatedIdeas.find(i => i.id === ideaId);
                      if (ideaToSave) saveGeneratedIdea(ideaToSave);
                 }
-                ideasData.favoriteIDs.push(ideaId);
+                ideasData.favoriteIDs.unshift(ideaId);
             }
             saveData();
         }
@@ -468,24 +461,49 @@
             if (!ideaObj) return;
             const isAlreadySaved = !!findIdeaById(ideaObj.id);
             if (!isAlreadySaved) {
-                ideasData.uncategorized.push({ ...ideaObj });
+                ideasData.uncategorized.unshift({ ...ideaObj });
                 saveData();
             }
         }
 
         function unsaveIdea(ideaId) {
-            ideasData.favoriteIDs = ideasData.favoriteIDs.filter(id => id !== ideaId);
-            ideasData.uncategorized = ideasData.uncategorized.filter(i => i.id !== ideaId);
-            ideasData.folders.forEach(folder => {
-                folder.ideas = folder.ideas.filter(i => i.id !== ideaId);
-            });
-            saveData();
+            const idea = findAndRemoveIdea(ideaId);
+            if(idea) saveData();
+        }
+
+        function deleteIdea(ideaId) {
+            const idea = findAndRemoveIdea(ideaId);
+            if (idea) {
+                ideasData.trash.unshift(idea);
+                saveData();
+            }
+        }
+
+        function restoreIdea(ideaId) {
+            const trashIndex = ideasData.trash.findIndex(i => i.id === ideaId);
+            if(trashIndex > -1) {
+                const ideaToRestore = ideasData.trash.splice(trashIndex, 1)[0];
+                ideasData.uncategorized.unshift(ideaToRestore);
+                saveData();
+            }
+        }
+        
+        function permanentlyDeleteIdea(ideaId) {
+            const trashIndex = ideasData.trash.findIndex(i => i.id === ideaId);
+            if(trashIndex > -1) {
+                ideasData.trash.splice(trashIndex, 1);
+                saveData();
+            }
         }
 
         function toggleEditMode(ideaId) {
             editing.ideaId = editing.ideaId === ideaId ? null : ideaId;
-            displayGeneratedIdeas();
-            renderSavedIdeas();
+            if (!uiElements.savedView.classList.contains('hidden')) {
+                renderSavedIdeas();
+            }
+            if (!uiElements.generatorView.classList.contains('hidden')) {
+                displayGeneratedIdeas();
+            }
         }
         
         function handleEditSave(ideaId) {
@@ -493,17 +511,10 @@
             const textarea = document.querySelector(`div[data-id='${ideaId}'] textarea`);
             if (textarea && ideaLocation) {
                 const newText = textarea.value;
-                const oldIdea = ideaLocation.type === 'folder' ? ideasData.folders[ideaLocation.folderIndex].ideas[ideaLocation.ideaIndex] : ideasData.uncategorized[ideaLocation.ideaIndex];
-                const oldText = oldIdea.originalIdea;
-                oldIdea.originalIdea = newText;
-                
-                const favIndex = ideasData.favoriteIDs.findIndex(id => id === ideaId);
-                if (favIndex > -1) {
-                    // It's a favorite, no text stored there, just the ID
-                }
+                ideaLocation.array[ideaLocation.ideaIndex].originalIdea = newText;
                 editing.ideaId = null;
                 saveData();
-            } else if (textarea) { 
+            } else if (textarea) { // Handle generated ideas
                 const genIdea = generatedIdeas.find(i => i.id === ideaId);
                 if (genIdea) genIdea.originalIdea = textarea.value;
                 editing.ideaId = null;
@@ -512,25 +523,31 @@
         }
 
         function findIdeaById(id) {
-            for (const idea of ideasData.uncategorized) if(idea.id === id) return idea;
-            for (const folder of ideasData.folders) {
-                const idea = folder.ideas.find(item => item.id === id);
-                if (idea) return idea;
-            }
-            return null;
+            const allIdeas = [...ideasData.uncategorized, ...ideasData.folders.flatMap(f => f.ideas), ...ideasData.trash];
+            return allIdeas.find(idea => idea.id === id) || null;
         }
 
         function findIdeaLocation(id) {
             for (let i = 0; i < ideasData.folders.length; i++) {
                 const ideaIndex = ideasData.folders[i].ideas.findIndex(item => item.id === id);
-                if (ideaIndex > -1) return { type: 'folder', folderIndex: i, ideaIndex: ideaIndex };
+                if (ideaIndex > -1) return { array: ideasData.folders[i].ideas, ideaIndex: ideaIndex, type: 'folder', folderIndex: i };
             }
-            const uncatIndex = ideasData.uncategorized.findIndex(i => i.id === id);
-            if (uncatIndex > -1) return { type: 'uncategorized', ideaIndex: uncatIndex };
+            let uncatIndex = ideasData.uncategorized.findIndex(i => i.id === id);
+            if (uncatIndex > -1) return { array: ideasData.uncategorized, ideaIndex: uncatIndex, type: 'uncategorized' };
+            let trashIndex = ideasData.trash.findIndex(i => i.id === id);
+            if(trashIndex > -1) return { array: ideasData.trash, ideaIndex: trashIndex, type: 'trash' };
             return null;
         }
 
-        function createIdeaCard(ideaObj, ideaIndex, type, folderIndex = null) {
+        function findAndRemoveIdea(id) {
+            const location = findIdeaLocation(id);
+            if(location) {
+                return location.array.splice(location.ideaIndex, 1)[0];
+            }
+            return null;
+        }
+
+        function createIdeaCard(ideaObj, type) {
             const ideaElement = document.createElement('div');
             ideaElement.className = 'glass-card p-4 rounded-lg flex flex-col gap-3';
             ideaElement.dataset.id = ideaObj.id;
@@ -553,21 +570,38 @@
             const buttonContainer = document.createElement('div');
             buttonContainer.className = 'flex items-center gap-2 justify-end border-t border-white/10 pt-3 mt-3 flex-wrap';
 
-            const isFavorite = ideasData.favoriteIDs.includes(ideaObj.id);
-            const favButton = document.createElement('button');
-            favButton.className = `p-2 rounded-full transition ${isFavorite ? 'text-yellow-400' : 'text-white/50 hover:text-white'}`;
-            favButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" ${isFavorite ? 'fill="currentColor"' : 'fill="none"'} stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
-            favButton.onclick = () => toggleFavorite(ideaObj.id);
-            buttonContainer.appendChild(favButton);
-
             if(isEditingThis) {
                  const saveBtn = document.createElement('button');
                  saveBtn.className = 'bg-green-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-green-500/100 transition';
                  saveBtn.innerHTML = `Save`;
                  saveBtn.onclick = () => handleEditSave(ideaObj.id);
                  buttonContainer.appendChild(saveBtn);
+                 const cancelBtn = document.createElement('button');
+                 cancelBtn.className = 'bg-gray-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-gray-500/100 transition';
+                 cancelBtn.textContent = 'Cancel';
+                 cancelBtn.onclick = () => toggleEditMode(ideaObj.id);
+                 buttonContainer.appendChild(cancelBtn);
+            } else if (type === 'trash') {
+                const restoreBtn = document.createElement('button');
+                restoreBtn.className = 'bg-green-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-green-500/100 transition';
+                restoreBtn.innerHTML = `Restore`;
+                restoreBtn.onclick = () => restoreIdea(ideaObj.id);
+                buttonContainer.appendChild(restoreBtn);
+
+                const permDeleteBtn = document.createElement('button');
+                permDeleteBtn.className = 'bg-red-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-red-500/100 transition';
+                permDeleteBtn.innerHTML = `Delete Forever`;
+                permDeleteBtn.onclick = () => permanentlyDeleteIdea(ideaObj.id);
+                buttonContainer.appendChild(permDeleteBtn);
             } else {
-                 if (type === 'generated') {
+                const isFavorite = ideasData.favoriteIDs.includes(ideaObj.id);
+                const favButton = document.createElement('button');
+                favButton.className = `p-2 rounded-full transition ${isFavorite ? 'text-yellow-400' : 'text-white/50 hover:text-white'}`;
+                favButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" ${isFavorite ? 'fill="currentColor"' : 'fill="none"'} stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+                favButton.onclick = () => toggleFavorite(ideaObj.id);
+                buttonContainer.appendChild(favButton);
+
+                if (type === 'generated') {
                      const isSaved = !!findIdeaById(ideaObj.id);
                      const saveButton = document.createElement('button');
                      saveButton.className = 'text-sm font-semibold py-1 px-3 rounded-full transition flex-shrink-0';
@@ -575,13 +609,13 @@
                      saveButton.className += isSaved ? ' bg-red-500/80 hover:bg-red-500/100' : ' bg-white/20 hover:bg-white/40';
                      saveButton.onclick = isSaved ? () => unsaveIdea(ideaObj.id) : () => saveGeneratedIdea(ideaObj);
                      buttonContainer.appendChild(saveButton);
-                 } else {
+                } else {
                     const moveBtn = document.createElement('button');
                     moveBtn.className = 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition';
                     moveBtn.innerHTML = `Move`;
                     moveBtn.onclick = () => openMoveModal(ideaObj.id);
                     buttonContainer.appendChild(moveBtn);
-                 }
+                }
                 
                 const chatButton = document.createElement('button');
                 chatButton.className = 'bg-white/20 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-white/40 transition';
@@ -596,11 +630,10 @@
                 buttonContainer.appendChild(editButton);
 
                 if (type !== 'generated') {
-                     const ideaLocation = findIdeaLocation(ideaObj.id);
                      const deleteButton = document.createElement('button');
                      deleteButton.className = 'bg-red-500/50 text-white p-2 rounded-full hover:bg-red-500/80 transition';
                      deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-                     deleteButton.onclick = () => deleteIdea(ideaLocation.ideaIndex, ideaLocation.type, ideaLocation.folderIndex);
+                     deleteButton.onclick = () => deleteIdea(ideaObj.id);
                      buttonContainer.appendChild(deleteButton);
                 }
             }
@@ -611,7 +644,7 @@
         function displayGeneratedIdeas() {
             uiElements.resultsDiv.innerHTML = ''; 
             generatedIdeas.forEach((ideaObj, index) => {
-                uiElements.resultsDiv.appendChild(createIdeaCard(ideaObj, index, 'generated'));
+                uiElements.resultsDiv.appendChild(createIdeaCard(ideaObj, 'generated'));
             });
         }
         
@@ -639,6 +672,7 @@
                 }
                 uiElements.folderList.appendChild(folderBtn);
             });
+            uiElements.folderList.appendChild(createFolderItem('Trash', 'trash'));
         }
         
         function renderSavedIdeas() {
@@ -651,6 +685,8 @@
             } else if (activeFolder === 'favorites') {
                 const allIdeas = [...ideasData.folders.flatMap(f => f.ideas), ...ideasData.uncategorized];
                 ideasToRender = allIdeas.filter(idea => ideasData.favoriteIDs.includes(idea.id));
+            } else if (activeFolder === 'trash') {
+                ideasToRender = ideasData.trash;
             } else if (activeFolder !== 'all' && activeFolder !== 'favorites' && ideasData.folders[activeFolder]) {
                 ideasToRender = ideasData.folders[activeFolder].ideas;
             }
@@ -659,10 +695,8 @@
             
             if (filteredList.length > 0) {
                  filteredList.forEach(ideaObj => {
-                    const location = findIdeaLocation(ideaObj.id);
-                    if (location) {
-                        uiElements.savedIdeasList.appendChild(createIdeaCard(ideaObj, location.ideaIndex, location.type, location.folderIndex));
-                    }
+                    const type = activeFolder === 'trash' ? 'trash' : 'saved';
+                    uiElements.savedIdeasList.appendChild(createIdeaCard(ideaObj, type));
                  });
             } else {
                  uiElements.savedIdeasList.innerHTML = `<p class="text-center" style="color:var(--text-secondary)">No ideas here.</p>`;
