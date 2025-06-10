@@ -14,6 +14,7 @@
             --text-secondary: #e0e7ff;
             --glass-bg: rgba(255, 255, 255, 0.1);
             --glass-border: rgba(255, 255, 255, 0.2);
+            --input-bg: rgba(255, 255, 255, 0.1);
             --tab-active-bg: rgba(255, 255, 255, 0.2);
             --button-primary-bg: white;
             --button-primary-text: #5b21b6;
@@ -27,6 +28,7 @@
             --text-secondary: #4b5563;
             --glass-bg: rgba(255, 255, 255, 0.8);
             --glass-border: rgba(209, 213, 219, 1);
+            --input-bg: rgba(255, 255, 255, 1);
             --tab-active-bg: rgba(0, 0, 0, 0.1);
             --button-primary-bg: #4f46e5;
             --button-primary-text: white;
@@ -39,6 +41,7 @@
             --text-secondary: #9ca3af;
             --glass-bg: rgba(55, 65, 81, 0.5);
             --glass-border: rgba(75, 85, 99, 0.6);
+            --input-bg: rgba(255, 255, 255, 0.1);
             --tab-active-bg: rgba(75, 85, 99, 1);
             --button-primary-bg: #374151;
             --button-primary-text: white;
@@ -51,6 +54,7 @@
             --text-secondary: #00B300;
             --glass-bg: rgba(0, 255, 0, 0.05);
             --glass-border: rgba(0, 255, 0, 0.1);
+            --input-bg: rgba(0, 255, 0, 0.1);
             --tab-active-bg: rgba(0, 255, 0, 0.2);
             --button-primary-bg: #00FF00;
             --button-primary-text: #000000;
@@ -68,6 +72,16 @@
             backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
         }
+        .themed-input {
+            background-color: var(--input-bg);
+            border-color: var(--glass-border);
+            color: var(--text-main);
+        }
+        .themed-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
         .tab.active { background-color: var(--tab-active-bg); }
         .chat-bubble { padding: 0.75rem 1rem; border-radius: 1rem; max-width: 80%; }
         .chat-bubble-user { background-color: rgba(255, 255, 255, 0.2); align-self: flex-end; border-bottom-right-radius: 0.25rem; }
@@ -103,7 +117,7 @@
                 <main>
                     <div class="mb-4">
                         <label for="topic" class="block text-sm font-medium" style="color: var(--text-secondary);">What topic do you need ideas for?</label>
-                        <input type="text" id="topic" class="w-full mt-1 bg-white/10 border border-white/20 rounded-lg py-3 px-4 focus:outline-none" placeholder="e.g., 'podcast names'">
+                        <input type="text" id="topic" class="w-full mt-1 border rounded-lg py-3 px-4 focus:outline-none themed-input" placeholder="e.g., 'podcast names'">
                     </div>
                     
                     <button id="generateBtn" class="w-full font-bold py-3 px-4 rounded-lg transition-all shadow-lg transform hover:scale-105" style="background-color: var(--button-primary-bg); color: var(--button-primary-text);">
@@ -138,7 +152,7 @@
                 <!-- Right Panel: Ideas -->
                 <main class="w-2/3">
                     <div class="flex gap-2 mb-4">
-                        <input type="text" id="searchInput" class="flex-grow w-full bg-white/10 border border-white/20 rounded-full py-1 px-3 focus:outline-none" placeholder="Search ideas...">
+                        <input type="text" id="searchInput" class="flex-grow w-full border rounded-full py-1 px-3 focus:outline-none themed-input" placeholder="Search ideas...">
                     </div>
                     <div id="saved-ideas-list" class="space-y-4 h-[60vh] overflow-y-auto pr-2">
                     </div>
@@ -182,7 +196,7 @@
 
     </div>
     
-    <!-- Modals -->
+    <!-- Modals (Unchanged) -->
     <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -191,7 +205,7 @@
             </div>
             <div id="chat-history" class="flex-grow overflow-y-auto p-2 space-y-4 flex flex-col"></div>
             <div class="mt-4 flex items-center">
-                <input type="text" id="chat-input" class="flex-grow bg-white/20 border border-white/30 rounded-lg py-2 px-3 focus:outline-none" placeholder="e.g., 'make it shorter'">
+                <input type="text" id="chat-input" class="flex-grow themed-input border rounded-lg py-2 px-3 focus:outline-none" placeholder="e.g., 'make it shorter'">
                 <button id="chat-send-btn" class="ml-2 bg-indigo-500 p-2 rounded-lg hover:bg-indigo-600 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
@@ -202,7 +216,7 @@
      <div id="moveFolderModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-6 max-w-sm w-full">
             <h3 class="font-bold text-lg mb-4">Move to Folder</h3>
-            <select id="moveFolderSelect" class="w-full bg-white/20 border border-white/30 rounded-lg p-2 mb-4"></select>
+            <select id="moveFolderSelect" class="w-full themed-input border rounded-lg p-2 mb-4"></select>
             <div class="flex justify-end gap-2">
                 <button id="cancelMoveBtn" class="bg-white/20 font-semibold py-1 px-4 rounded-full">Cancel</button>
                 <button id="confirmMoveBtn" class="bg-indigo-500 font-semibold py-1 px-4 rounded-full">Move</button>
@@ -370,6 +384,7 @@
             uiElements.body.dataset.theme = themeName;
             localStorage.setItem('ideaSparkTheme', themeName);
         }
+
         function toggleTheme() {
             const themes = ideasData.ownedThemes;
             const currentTheme = uiElements.body.dataset.theme || 'classic';
@@ -377,7 +392,6 @@
             const nextIndex = (currentIndex + 1) % themes.length;
             setTheme(themes[nextIndex]);
         }
-
         // --- Folder, Search, Filter & Idea Actions ---
         function createNewFolder() {
             const folderName = prompt("Enter a name for the new folder:");
@@ -512,6 +526,8 @@
             if (textarea && ideaLocation) {
                 const newText = textarea.value;
                 ideaLocation.array[ideaLocation.ideaIndex].originalIdea = newText;
+                
+                // Update favorite if it exists by ID, no text change needed.
                 editing.ideaId = null;
                 saveData();
             } else if (textarea) { // Handle generated ideas
@@ -526,6 +542,14 @@
             const allIdeas = [...ideasData.uncategorized, ...ideasData.folders.flatMap(f => f.ideas), ...ideasData.trash];
             return allIdeas.find(idea => idea.id === id) || null;
         }
+        
+        function findAndRemoveIdea(id) {
+            const location = findIdeaLocation(id);
+            if(location) {
+                return location.array.splice(location.ideaIndex, 1)[0];
+            }
+            return null;
+        }
 
         function findIdeaLocation(id) {
             for (let i = 0; i < ideasData.folders.length; i++) {
@@ -539,14 +563,6 @@
             return null;
         }
 
-        function findAndRemoveIdea(id) {
-            const location = findIdeaLocation(id);
-            if(location) {
-                return location.array.splice(location.ideaIndex, 1)[0];
-            }
-            return null;
-        }
-
         function createIdeaCard(ideaObj, type) {
             const ideaElement = document.createElement('div');
             ideaElement.className = 'glass-card p-4 rounded-lg flex flex-col gap-3';
@@ -557,7 +573,7 @@
             if (isEditingThis) {
                 const textarea = document.createElement('textarea');
                 textarea.value = ideaObj.originalIdea;
-                textarea.className = 'flex-grow w-full bg-white/20 border border-white/30 rounded-lg py-1 px-2 focus:outline-none';
+                textarea.className = 'flex-grow w-full bg-white/20 border border-white/30 rounded-lg py-1 px-2 focus:outline-none themed-input';
                 textarea.rows = '1';
                 textarea.addEventListener('input', () => { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; });
                 setTimeout(() => { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; }, 0);
@@ -643,7 +659,7 @@
 
         function displayGeneratedIdeas() {
             uiElements.resultsDiv.innerHTML = ''; 
-            generatedIdeas.forEach((ideaObj, index) => {
+            generatedIdeas.forEach((ideaObj) => {
                 uiElements.resultsDiv.appendChild(createIdeaCard(ideaObj, 'generated'));
             });
         }
@@ -679,6 +695,7 @@
             uiElements.savedIdeasList.innerHTML = '';
             const searchTerm = uiElements.searchInput.value.toLowerCase();
             let ideasToRender = [];
+            let currentType = activeFolder === 'trash' ? 'trash' : 'saved';
             
             if (activeFolder === 'all') {
                 ideasToRender = [...ideasData.folders.flatMap(f => f.ideas), ...ideasData.uncategorized];
@@ -695,8 +712,7 @@
             
             if (filteredList.length > 0) {
                  filteredList.forEach(ideaObj => {
-                    const type = activeFolder === 'trash' ? 'trash' : 'saved';
-                    uiElements.savedIdeasList.appendChild(createIdeaCard(ideaObj, type));
+                    uiElements.savedIdeasList.appendChild(createIdeaCard(ideaObj, currentType));
                  });
             } else {
                  uiElements.savedIdeasList.innerHTML = `<p class="text-center" style="color:var(--text-secondary)">No ideas here.</p>`;
