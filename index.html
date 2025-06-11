@@ -249,6 +249,18 @@
             <div id="color-options" class="grid grid-cols-5 gap-4"></div>
         </div>
     </div>
+
+    <!-- *** NEW: New Folder Modal *** -->
+    <div id="newFolderModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl p-6 max-w-sm w-full">
+            <h3 class="font-bold text-lg mb-4">Create New Folder</h3>
+            <input type="text" id="newFolderName" class="w-full themed-input border rounded-lg p-2 mb-4" placeholder="Folder name...">
+            <div class="flex justify-end gap-2">
+                <button id="cancelNewFolderBtn" class="secondary-btn font-semibold py-1 px-4 rounded-full">Cancel</button>
+                <button id="confirmNewFolderBtn" class="bg-indigo-500 font-semibold py-1 px-4 rounded-full">Create</button>
+            </div>
+        </div>
+    </div>
     <script>
         // --- DOM Elements ---
         const uiElements = {
@@ -265,6 +277,8 @@
             moveFolderModal: document.getElementById('moveFolderModal'), moveFolderSelect: document.getElementById('moveFolderSelect'),
             cancelMoveBtn: document.getElementById('cancelMoveBtn'), confirmMoveBtn: document.getElementById('confirmMoveBtn'),
             folderColorModal: document.getElementById('folderColorModal'), colorOptions: document.getElementById('color-options'),
+            newFolderModal: document.getElementById('newFolderModal'), newFolderName: document.getElementById('newFolderName'),
+            cancelNewFolderBtn: document.getElementById('cancelNewFolderBtn'), confirmNewFolderBtn: document.getElementById('confirmNewFolderBtn')
         };
 
         // --- App State & Config ---
@@ -295,7 +309,9 @@
             uiElements.storeTab.addEventListener('click', () => switchView('store'));
             uiElements.themesTab.addEventListener('click', () => switchView('themes'));
             uiElements.generateBtn.addEventListener('click', handleGeneration);
-            uiElements.newFolderBtn.addEventListener('click', createNewFolder);
+            uiElements.newFolderBtn.addEventListener('click', () => uiElements.newFolderModal.classList.remove('hidden'));
+            uiElements.cancelNewFolderBtn.addEventListener('click', () => uiElements.newFolderModal.classList.add('hidden'));
+            uiElements.confirmNewFolderBtn.addEventListener('click', handleConfirmNewFolder);
             uiElements.searchInput.addEventListener('input', renderSavedIdeas);
             uiElements.chatSendBtn.addEventListener('click', handleChatSend);
             uiElements.chatInput.addEventListener('keypress', (e) => (e.key === 'Enter') && handleChatSend());
@@ -366,7 +382,7 @@
         // --- Data Persistence & Themes ---
         function loadIdeasData() {
             try {
-                const data = localStorage.getItem('ideaSparkData_v4');
+                const data = localStorage.getItem('ideaSparkData_v5');
                 if (data) {
                     const parsedData = JSON.parse(data);
                     // Ensure all new properties exist for older data structures
@@ -385,7 +401,7 @@
         }
 
         function saveData() {
-            localStorage.setItem('ideaSparkData_v4', JSON.stringify(ideasData));
+            localStorage.setItem('ideaSparkData_v5', JSON.stringify(ideasData));
             if (!uiElements.savedView.classList.contains('hidden')) {
                 renderFolderList();
                 renderSavedIdeas();
@@ -412,11 +428,13 @@
             setTheme(themes[nextIndex]);
         }
         // --- Folder, Search, Filter & Idea Actions ---
-        function createNewFolder() {
-            const folderName = prompt("Enter a name for the new folder:");
+        function handleConfirmNewFolder() {
+            const folderName = uiElements.newFolderName.value.trim();
             if (folderName && !ideasData.folders.some(f => f.name === folderName)) {
                 ideasData.folders.push({ name: folderName, ideas: [], isCollapsed: false, color: 'default' });
                 saveData();
+                uiElements.newFolderName.value = '';
+                uiElements.newFolderModal.classList.add('hidden');
             } else if (folderName) {
                 alert("A folder with that name already exists.");
             }
@@ -548,7 +566,7 @@
                 
                 editing.ideaId = null;
                 saveData();
-            } else if (textarea) { // Handle generated ideas
+            } else if (textarea) { 
                 const genIdea = generatedIdeas.find(i => i.id === ideaId);
                 if (genIdea) genIdea.originalIdea = textarea.value;
                 editing.ideaId = null;
@@ -630,9 +648,10 @@
             } else {
                 const isFavorite = ideasData.favoriteIDs.includes(ideaObj.id);
                 const favButton = document.createElement('button');
-                favButton.className = `p-2 rounded-full transition text-yellow-400`;
-                favButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" ${isFavorite ? 'fill="currentColor"' : 'fill="none"'} stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+                favButton.className = `p-2 rounded-full transition`;
+                favButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
                 favButton.style.color = isFavorite ? 'var(--favorite-color)' : 'var(--text-secondary)';
+                favButton.firstElementChild.style.fill = isFavorite ? 'var(--favorite-color)' : 'none';
                 favButton.onclick = () => toggleFavorite(ideaObj.id);
                 buttonContainer.appendChild(favButton);
 
@@ -685,9 +704,13 @@
         
         function renderFolderList() {
             uiElements.folderList.innerHTML = '';
-            const createFolderItem = (text, value, colorClass) => {
+            const createFolderItem = (text, value) => {
                 const btn = document.createElement('button');
-                btn.className = `folder-item w-full text-left p-2 rounded-lg font-semibold transition flex justify-between items-center border-l-4 ${activeFolder === value ? 'active' : ''} ${colorClass || 'border-transparent'}`;
+                let colorClass = 'border-transparent';
+                if (typeof value === 'number') {
+                    colorClass = FOLDER_COLORS[ideasData.folders[value].color] || FOLDER_COLORS.default;
+                }
+                btn.className = `folder-item w-full text-left p-2 rounded-lg font-semibold transition flex justify-between items-center border-l-4 ${activeFolder === value ? 'active' : 'hover:bg-white/10'} ${colorClass}`;
                 const span = document.createElement('span');
                 span.textContent = text;
                 btn.appendChild(span);
@@ -697,7 +720,7 @@
             uiElements.folderList.appendChild(createFolderItem('All Saved', 'all'));
             uiElements.folderList.appendChild(createFolderItem('Favorites', 'favorites'));
             ideasData.folders.forEach((folder, index) => {
-                const folderBtn = createFolderItem(folder.name, index, FOLDER_COLORS[folder.color]);
+                const folderBtn = createFolderItem(folder.name, index);
                 if(activeFolder === index) {
                     const colorBtn = document.createElement('button');
                     colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
@@ -759,7 +782,7 @@
                 preview.style.background = theme.preview;
                 
                 const nameWrapper = document.createElement('div');
-                nameWrapper.className = 'flex items-center gap-2';
+                nameWrapper.className = 'flex items-center gap-2 flex-wrap justify-center';
                 const name = document.createElement('span');
                 name.textContent = theme.name;
                 name.className = 'font-semibold';
