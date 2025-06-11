@@ -1,4 +1,4 @@
-<!DOCTYPE html>More actions
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -157,13 +157,11 @@
                 </main>
             </div>
         </div>
-
         <!-- Saved Ideas View -->
         <div id="savedView" class="hidden">
-             <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8 flex gap-6">
+             <div class="glass-card rounded-2xl shadow-2xl p-4 md:p-8 flex flex-col md:flex-row gap-6">
                 <!-- Left Panel: Folders -->
-                <aside class="w-1/3 border-r pr-6" style="border-color: var(--glass-border);">
-                    <button id="newFolderBtn" class="w-full secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition mb-4">New Folder</button>
+                <aside class="w-full md:w-1/3 md:border-r md:pr-6" style="border-color: var(--glass-border);">
                     <div class="flex gap-2 mb-4">
                         <button id="newFolderBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">New Folder</button>
                         <button id="selectModeBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">Select</button>
@@ -173,8 +171,7 @@
                 </aside>
 
                 <!-- Right Panel: Ideas -->
-                <main class="w-2/3">
-                <main class="w-2/3 relative">
+                <main class="w-full md:w-2/3 relative">
                     <div class="flex gap-2 mb-4">
                         <input type="text" id="searchInput" class="flex-grow w-full border rounded-full py-1 px-3 focus:outline-none themed-input" placeholder="Search ideas...">
                     </div>
@@ -227,7 +224,6 @@
         </div>
 
     </div>
-
     <!-- Modals -->
     <!-- Modals (Unchanged) -->
     <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
@@ -342,7 +338,6 @@
             uiElements.bulkMoveBtn.addEventListener('click', handleBulkMove);
             uiElements.bulkDeleteBtn.addEventListener('click', handleBulkDelete);
         }
-
         // --- Core Functions: View Switching, Generation, API Fetching ---
         function switchView(viewName) {
             editing.ideaId = null;
