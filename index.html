@@ -24,6 +24,7 @@
             --button-secondary-hover-bg: rgba(255, 255, 255, 0.3);
             --favorite-color: #facc15; /* yellow-400 */
             --font-main: 'Inter', sans-serif;
+            --map-node-bg: rgba(102, 126, 234, 0.8); /* Default for classic theme */
         }
 
         [data-theme="light"] {
@@ -40,6 +41,7 @@
             --button-secondary-bg: rgba(0, 0, 0, 0.05);
             --button-secondary-hover-bg: rgba(0, 0, 0, 0.1);
             --favorite-color: #ca8a04; /* yellow-600 */
+            --map-node-bg: rgba(79, 70, 229, 0.8); /* Indigo-500 for light theme */
         }
 
         [data-theme="dark"] {
@@ -56,6 +58,7 @@
             --button-secondary-bg: rgba(255, 255, 255, 0.1);
             --button-secondary-hover-bg: rgba(255, 255, 255, 0.2);
             --favorite-color: #facc15;
+            --map-node-bg: rgba(55, 65, 81, 0.8); /* Gray-700 for dark theme */
         }
 
         [data-theme="hacker"] {
@@ -73,7 +76,95 @@
             --button-secondary-hover-bg: rgba(0, 255, 0, 0.2);
             --favorite-color: #00FF00;
             --font-main: 'Inconsolata', monospace;
+            --map-node-bg: rgba(0, 255, 0, 0.4); /* Green for hacker theme */
         }
+
+        /* NEW THEMES */
+        [data-theme="ocean-breeze"] {
+            --bg-gradient-start: #20b2aa; /* Light Sea Green */
+            --bg-gradient-end: #4682b4;   /* Steel Blue */
+            --text-main: white;
+            --text-secondary: #e0f2f7;
+            --glass-bg: rgba(173, 216, 230, 0.2); /* LightBlue */
+            --glass-border: rgba(173, 216, 230, 0.4);
+            --input-bg: rgba(173, 216, 230, 0.1);
+            --tab-active-bg: rgba(173, 216, 230, 0.3);
+            --button-primary-bg: #b0e0e6; /* PowderBlue */
+            --button-primary-text: #2f4f4f; /* DarkSlateGray */
+            --button-secondary-bg: rgba(173, 216, 230, 0.25);
+            --button-secondary-hover-bg: rgba(173, 216, 230, 0.4);
+            --favorite-color: #ffd700; /* Gold */
+            --map-node-bg: rgba(70, 130, 180, 0.8); /* Steel Blue */
+        }
+
+        [data-theme="forest-whisper"] {
+            --bg-gradient-start: #228b22; /* Forest Green */
+            --bg-gradient-end: #556b2f;   /* Dark Olive Green */
+            --text-main: white;
+            --text-secondary: #e6ffe6;
+            --glass-bg: rgba(144, 238, 144, 0.2); /* LightGreen */
+            --glass-border: rgba(144, 238, 144, 0.4);
+            --input-bg: rgba(144, 238, 144, 0.1);
+            --tab-active-bg: rgba(144, 238, 144, 0.3);
+            --button-primary-bg: #90ee90; /* LightGreen */
+            --button-primary-text: #2f4f4f; /* DarkSlateGray */
+            --button-secondary-bg: rgba(144, 238, 144, 0.25);
+            --button-secondary-hover-bg: rgba(144, 238, 144, 0.4);
+            --favorite-color: #ff8c00; /* DarkOrange */
+            --map-node-bg: rgba(34, 139, 34, 0.8); /* Forest Green */
+        }
+
+        [data-theme="sunset-glow"] {
+            --bg-gradient-start: #ff7f50; /* Coral */
+            --bg-gradient-end: #ff4500;   /* OrangeRed */
+            --text-main: white;
+            --text-secondary: #fff5e0;
+            --glass-bg: rgba(255, 160, 122, 0.2); /* LightSalmon */
+            --glass-border: rgba(255, 160, 122, 0.4);
+            --input-bg: rgba(255, 160, 122, 0.1);
+            --tab-active-bg: rgba(255, 160, 122, 0.3);
+            --button-primary-bg: #ffa07a; /* LightSalmon */
+            --button-primary-text: #8b0000; /* DarkRed */
+            --button-secondary-bg: rgba(255, 160, 122, 0.25);
+            --button-secondary-hover-bg: rgba(255, 160, 122, 0.4);
+            --favorite-color: #4682b4; /* Steel Blue */
+            --map-node-bg: rgba(255, 69, 0, 0.8); /* OrangeRed */
+        }
+
+        [data-theme="midnight-sparkle"] {
+            --bg-gradient-start: #191970; /* Midnight Blue */
+            --bg-gradient-end: #4b0082;   /* Indigo */
+            --text-main: #e6e6fa; /* Lavender */
+            --text-secondary: #b0c4de; /* LightSteelBlue */
+            --glass-bg: rgba(72, 61, 139, 0.2); /* DarkSlateBlue */
+            --glass-border: rgba(72, 61, 139, 0.4);
+            --input-bg: rgba(72, 61, 139, 0.1);
+            --tab-active-bg: rgba(72, 61, 139, 0.3);
+            --button-primary-bg: #6a5acd; /* SlateBlue */
+            --button-primary-text: white;
+            --button-secondary-bg: rgba(72, 61, 139, 0.25);
+            --button-secondary-hover-bg: rgba(72, 61, 139, 0.4);
+            --favorite-color: #ffd700; /* Gold */
+            --map-node-bg: rgba(75, 0, 130, 0.8); /* Indigo */
+        }
+
+        [data-theme="desert-bloom"] {
+            --bg-gradient-start: #d2b48c; /* Tan */
+            --bg-gradient-end: #cd853f;   /* Peru */
+            --text-main: #4a2d1a; /* Dark Brown */
+            --text-secondary: #8b4513; /* SaddleBrown */
+            --glass-bg: rgba(245, 222, 179, 0.2); /* Wheat */
+            --glass-border: rgba(245, 222, 179, 0.4);
+            --input-bg: rgba(245, 222, 179, 0.1);
+            --tab-active-bg: rgba(245, 222, 179, 0.3);
+            --button-primary-bg: #deb887; /* BurlyWood */
+            --button-primary-text: #4a2d1a; /* Dark Brown */
+            --button-secondary-bg: rgba(245, 222, 179, 0.25);
+            --button-secondary-hover-bg: rgba(245, 222, 179, 0.4);
+            --favorite-color: #a52a2a; /* Brown */
+            --map-node-bg: rgba(205, 133, 63, 0.8); /* Peru */
+        }
+
 
         body {
             font-family: var(--font-main);
@@ -267,6 +358,39 @@
                          <button id="buyHackerThemeBtn" class="w-full bg-green-500 text-black font-bold py-3 rounded-lg">Buy Theme</button>
                      </div>
                  </div>
+                 <!-- NEW THEMES -->
+                 <div class="grid md:grid-cols-2 gap-6 mt-6">
+                     <div class="bg-white/10 p-6 rounded-lg text-center">
+                         <h3 class="text-xl font-bold">Ocean Breeze</h3>
+                         <p class="text-sm mt-1" style="color: var(--text-secondary);">Calming blues and greens.</p>
+                         <p class="text-5xl font-bold my-4">$0.99</p>
+                         <button id="buyOceanBreezeThemeBtn" class="w-full bg-blue-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                     </div>
+                     <div class="bg-white/10 p-6 rounded-lg text-center">
+                         <h3 class="text-xl font-bold">Forest Whisper</h3>
+                         <p class="text-sm mt-1" style="color: var(--text-secondary);">Earthy tones inspired by nature.</p>
+                         <p class="text-5xl font-bold my-4">$0.99</p>
+                         <button id="buyForestWhisperThemeBtn" class="w-full bg-green-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                     </div>
+                     <div class="bg-white/10 p-6 rounded-lg text-center">
+                         <h3 class="text-xl font-bold">Sunset Glow</h3>
+                         <p class="text-sm mt-1" style="color: var(--text-secondary);">Warm oranges and reds.</p>
+                         <p class="text-5xl font-bold my-4">$0.99</p>
+                         <button id="buySunsetGlowThemeBtn" class="w-full bg-orange-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                     </div>
+                     <div class="bg-white/10 p-6 rounded-lg text-center">
+                         <h3 class="text-xl font-bold">Midnight Sparkle</h3>
+                         <p class="text-sm mt-1" style="color: var(--text-secondary);">Deep purples and blues with subtle highlights.</p>
+                         <p class="text-5xl font-bold my-4">$0.99</p>
+                         <button id="buyMidnightSparkleThemeBtn" class="w-full bg-indigo-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                     </div>
+                     <div class="bg-white/10 p-6 rounded-lg text-center">
+                         <h3 class="text-xl font-bold">Desert Bloom</h3>
+                         <p class="text-sm mt-1" style="color: var(--text-secondary);">Soft desert hues with a touch of warmth.</p>
+                         <p class="text-5xl font-bold my-4">$0.99</p>
+                         <button id="buyDesertBloomThemeBtn" class="w-full bg-amber-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                     </div>
+                 </div>
             </div>
         </div>
 
@@ -362,7 +486,6 @@
             savedIdeasList: document.getElementById('saved-ideas-list'),
             generatorView: document.getElementById('generatorView'), savedView: document.getElementById('savedView'), storeView: document.getElementById('storeView'), themesView: document.getElementById('themesView'),
             generatorTab: document.getElementById('generatorTab'), savedTab: document.getElementById('savedTab'), storeTab: document.getElementById('storeTab'), themesTab: document.getElementById('themesTab'),
-            // Removed chat modal related elements: chatModal, closeChatModalBtn, chatHistory, chatInput, chatSendBtn, chatPromptTemplates, saveCustomPromptBtn, chatBackBtn
             newFolderBtn: document.getElementById('newFolderBtn'), searchInput: document.getElementById('searchInput'), 
             folderList: document.getElementById('folder-list'),
             themeList: document.getElementById('theme-list'),
@@ -393,6 +516,12 @@
             closeIdeaMapModalBtn: document.getElementById('closeIdeaMapModalBtn'),
             ideaMapCanvas: document.getElementById('ideaMapCanvas'),
             closeIdeaMapBtn: document.getElementById('closeIdeaMapBtn'),
+            // NEW THEME BUTTONS
+            buyOceanBreezeThemeBtn: document.getElementById('buyOceanBreezeThemeBtn'),
+            buyForestWhisperThemeBtn: document.getElementById('buyForestWhisperThemeBtn'),
+            buySunsetGlowThemeBtn: document.getElementById('buySunsetGlowThemeBtn'),
+            buyMidnightSparkleThemeBtn: document.getElementById('buyMidnightSparkleThemeBtn'),
+            buyDesertBloomThemeBtn: document.getElementById('buyDesertBloomThemeBtn'),
         };
 
         // --- App State & Config ---
@@ -404,12 +533,10 @@
             trash: [],
             adsRemoved: false,
             unlimitedGenerations: false,
-            // Removed customPromptTemplates
         };
         let activeFolder = 'all'; // 'all', 'favorites', 'trash', or folder index
         let generatedIdeas = [];
         let editing = { ideaId: null };
-        // Removed activeChat
         let moving = { ideaId: null };
         let changingColorFolderIndex = null;
         let selectMode = false;
@@ -439,9 +566,6 @@
         const TEXT_MAX_WIDTH = NODE_RADIUS * 1.5;
         const MAX_CHARS_PER_NODE = 25; // Max characters for node text
 
-        // Removed lastOpenedModal
-
-
         // --- Event Listeners ---
         function addEventListeners() {
             window.addEventListener('load', () => {
@@ -459,7 +583,6 @@
             uiElements.cancelNewFolderBtn.addEventListener('click', () => uiElements.newFolderModal.classList.add('hidden'));
             uiElements.confirmNewFolderBtn.addEventListener('click', handleConfirmNewFolder);
             uiElements.searchInput.addEventListener('input', renderSavedIdeas);
-            // Removed chatSendBtn, chatInput.keypress, closeChatModalBtn, chatBackBtn, saveCustomPromptBtn listeners
             
             uiElements.cancelMoveBtn.addEventListener('click', () => {
                 uiElements.moveFolderModal.classList.add('hidden');
@@ -474,6 +597,13 @@
             uiElements.removeAdsBtn.addEventListener('click', purchaseRemoveAds);
             uiElements.unlimitedBtn.addEventListener('click', purchaseUnlimitedGenerations);
             uiElements.buyHackerThemeBtn.addEventListener('click', purchaseHackerTheme);
+            // NEW THEME BUTTON LISTENERS
+            uiElements.buyOceanBreezeThemeBtn.addEventListener('click', () => purchaseTheme('ocean-breeze'));
+            uiElements.buyForestWhisperThemeBtn.addEventListener('click', () => purchaseTheme('forest-whisper'));
+            uiElements.buySunsetGlowThemeBtn.addEventListener('click', () => purchaseTheme('sunset-glow'));
+            uiElements.buyMidnightSparkleThemeBtn.addEventListener('click', () => purchaseTheme('midnight-sparkle'));
+            uiElements.buyDesertBloomThemeBtn.addEventListener('click', () => purchaseTheme('desert-bloom'));
+
 
             // Confirmation Modal Buttons
             uiElements.confirmModalCancelBtn.addEventListener('click', () => uiElements.customConfirmModal.classList.add('hidden'));
@@ -500,11 +630,8 @@
             uiElements.ideaMapCanvas.addEventListener('wheel', handleWheel, { passive: false });
 
             uiElements.ideaMapCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-            uiElements.ideaMapCanvas.addEventListener('touchend', handleTouchEnd); // Modified handleTouchEnd for tap detection
+            uiElements.ideaMapCanvas.addEventListener('touchend', handleTouchEnd);
             uiElements.ideaMapCanvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-
-            // Removed click listener from canvas as touch handler will manage clicks
-            // uiElements.ideaMapCanvas.addEventListener('click', handleCanvasClick); 
 
             window.addEventListener('resize', handleCanvasResize); // Ensure canvas resizes with window
         }
@@ -609,7 +736,6 @@
                         trash: parsedData.trash || [],
                         adsRemoved: parsedData.adsRemoved || false,
                         unlimitedGenerations: parsedData.unlimitedGenerations || false,
-                        // Removed customPromptTemplates
                     };
                     // Ensure all ideas have a linkedIdeas array
                     ideasData.uncategorized.forEach(idea => { if (!idea.linkedIdeas) idea.linkedIdeas = []; });
@@ -643,6 +769,13 @@
             }
             uiElements.body.dataset.theme = themeName;
             localStorage.setItem('ideaSparkTheme', themeName);
+            // After setting the theme, update the map node color variable
+            const rootStyle = getComputedStyle(document.documentElement);
+            const mapNodeBgColor = rootStyle.getPropertyValue('--map-node-bg');
+            // If the map is currently open, redraw it
+            if (!uiElements.ideaMapModal.classList.contains('hidden')) {
+                drawIdeaMap();
+            }
         }
         
         // --- Purchase & UI Update Functions ---
@@ -660,14 +793,15 @@
             showError("You now have unlimited generations! Thank you.");
         }
 
-        function purchaseHackerTheme() {
-            console.log("Simulating 'Hacker Theme' purchase...");
-            if (!ideasData.ownedThemes.includes('hacker')) {
-                ideasData.ownedThemes.push('hacker');
+        // NEW: Generic purchase theme function
+        function purchaseTheme(themeName) {
+            console.log(`Simulating '${themeName}' theme purchase...`);
+            if (!ideasData.ownedThemes.includes(themeName)) {
+                ideasData.ownedThemes.push(themeName);
             }
             saveData();
             renderThemeList(); // Re-render the theme list to show the new theme as owned
-            showError("Hacker theme unlocked!");
+            showError(`${themeName} theme unlocked!`);
         }
 
         function updateUIForPurchases() {
@@ -693,6 +827,32 @@
                 const isOwned = ideasData.ownedThemes.includes('hacker');
                 uiElements.buyHackerThemeBtn.disabled = isOwned;
                 uiElements.buyHackerThemeBtn.textContent = isOwned ? 'Owned' : 'Buy Theme';
+            }
+            // NEW THEMES UI UPDATE
+            if (uiElements.buyOceanBreezeThemeBtn) {
+                const isOwned = ideasData.ownedThemes.includes('ocean-breeze');
+                uiElements.buyOceanBreezeThemeBtn.disabled = isOwned;
+                uiElements.buyOceanBreezeThemeBtn.textContent = isOwned ? 'Owned' : 'Buy Theme';
+            }
+            if (uiElements.buyForestWhisperThemeBtn) {
+                const isOwned = ideasData.ownedThemes.includes('forest-whisper');
+                uiElements.buyForestWhisperThemeBtn.disabled = isOwned;
+                uiElements.buyForestWhisperThemeBtn.textContent = isOwned ? 'Owned' : 'Buy Theme';
+            }
+            if (uiElements.buySunsetGlowThemeBtn) {
+                const isOwned = ideasData.ownedThemes.includes('sunset-glow');
+                uiElements.buySunsetGlowThemeBtn.disabled = isOwned;
+                uiElements.buySunsetGlowThemeBtn.textContent = isOwned ? 'Owned' : 'Buy Theme';
+            }
+            if (uiElements.buyMidnightSparkleThemeBtn) {
+                const isOwned = ideasData.ownedThemes.includes('midnight-sparkle');
+                uiElements.buyMidnightSparkleThemeBtn.disabled = isOwned;
+                uiElements.buyMidnightSparkleThemeBtn.textContent = isOwned ? 'Owned' : 'Buy Theme';
+            }
+            if (uiElements.buyDesertBloomThemeBtn) {
+                const isOwned = ideasData.ownedThemes.includes('desert-bloom');
+                uiElements.buyDesertBloomThemeBtn.disabled = isOwned;
+                uiElements.buyDesertBloomThemeBtn.textContent = isOwned ? 'Owned' : 'Buy Theme';
             }
         }
         // --- Select Mode & Bulk Actions ---
@@ -1047,7 +1207,6 @@
                         const linkedIdeaSpan = document.createElement('span');
                         linkedIdeaSpan.className = 'bg-blue-600/30 px-2 py-1 rounded-full cursor-pointer hover:bg-blue-600/50 transition';
                         linkedIdeaSpan.textContent = linkedIdea.originalIdea.substring(0, 20) + (linkedIdea.originalIdea.length > 20 ? '...' : '');
-                        // Removed openChat, now no action on click
                         linkedIdeasContainer.appendChild(linkedIdeaSpan);
                     }
                 });
@@ -1117,13 +1276,6 @@
                     linkBtn.onclick = (e) => { e.stopPropagation(); openLinkIdeaModal(ideaObj.id); };
                     buttonContainer.appendChild(linkBtn);
                 }
-
-                // Removed chat button
-                // const chatButton = document.createElement('button');
-                // chatButton.className = 'secondary-btn text-sm font-semibold py-1 px-3 rounded-full transition';
-                // chatButton.innerHTML = `Chat`;
-                // chatButton.onclick = (e) => { e.stopPropagation(); openChat(ideaObj); };
-                // buttonContainer.appendChild(chatButton);
 
                 const editButton = document.createElement('button');
                 editButton.className = 'secondary-btn p-2 rounded-full transition';
@@ -1231,7 +1383,13 @@
                 classic: { name: 'Classic Spark', preview: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
                 light: { name: 'Light Mode', preview: 'linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%)' },
                 dark: { name: 'Dark Mode', preview: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)' },
-                hacker: { name: 'Hacker', preview: 'linear-gradient(135deg, #000000 0%, #0D0D0D 100%)' }
+                hacker: { name: 'Hacker', preview: 'linear-gradient(135deg, #000000 0%, #0D0D0D 100%)' },
+                // NEW THEMES
+                'ocean-breeze': { name: 'Ocean Breeze', preview: 'linear-gradient(135deg, #20b2aa 0%, #4682b4 100%)' },
+                'forest-whisper': { name: 'Forest Whisper', preview: 'linear-gradient(135deg, #228b22 0%, #556b2f 100%)' },
+                'sunset-glow': { name: 'Sunset Glow', preview: 'linear-gradient(135deg, #ff7f50 0%, #ff4500 100%)' },
+                'midnight-sparkle': { name: 'Midnight Sparkle', preview: 'linear-gradient(135deg, #191970 0%, #4b0082 100%)' },
+                'desert-bloom': { name: 'Desert Bloom', preview: 'linear-gradient(135deg, #d2b48c 0%, #cd853f 100%)' },
             };
 
             Object.keys(themes).forEach(themeKey => {
@@ -1264,8 +1422,6 @@
                 uiElements.themeList.appendChild(card);
             });
         }
-
-        // Removed Chat functions entirely: openChat, renderChatHistory, handleChatSend, handleChatBack, renderPromptTemplates, saveCustomPrompt
 
         function showError(message) {
             uiElements.errorMessage.textContent = message;
@@ -1420,14 +1576,17 @@
                 // Draw node circle
                 ctx.beginPath();
                 ctx.arc(idea.x, idea.y, NODE_RADIUS, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(102, 126, 234, 0.8)'; // Using a theme color
+                // Get theme-specific map node background color
+                const rootStyle = getComputedStyle(document.documentElement);
+                const mapNodeBgColor = rootStyle.getPropertyValue('--map-node-bg');
+                ctx.fillStyle = mapNodeBgColor; 
                 ctx.fill();
                 ctx.strokeStyle = 'white';
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
                 // Draw node text
-                ctx.fillStyle = 'white';
+                ctx.fillStyle = rootStyle.getPropertyValue('--text-main'); // Use theme's main text color
                 ctx.font = '12px Inter';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -1622,11 +1781,10 @@
                 const idea = activeIdeas[i];
                 const distance = Math.sqrt(Math.pow(worldX - idea.x, 2) + Math.pow(worldY - idea.y, 2));
                 if (distance <= NODE_RADIUS) {
-                    // Idea clicked, open its chat modal (now just logs to console or performs a different action)
+                    // Idea tapped, log its content and show a message
                     console.log("Idea tapped on map:", idea.originalIdea);
-                    // You can replace this with a new modal to view the idea details, or edit it directly.
-                    // For now, it will simply log the idea.
                     showError(`Tapped Idea: ${idea.originalIdea}`);
+                    // Optionally, you could open a detail modal for the idea here
                     break;
                 }
             }
