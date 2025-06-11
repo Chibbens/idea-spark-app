@@ -446,6 +446,7 @@
         const NODE_RADIUS = 50;
         const NODE_PADDING = 10;
         const TEXT_MAX_WIDTH = NODE_RADIUS * 1.5;
+        const MAX_CHARS_PER_NODE = 25; // NEW: Max characters for node text
 
 
         // --- Event Listeners ---
@@ -864,7 +865,7 @@
                      ideasData.folders[parseInt(targetFolderValue)].ideas.unshift(...itemsToMove);
                 } else {
                     // Fallback: if somehow an invalid target, move to uncategorized (visible in All Saved)
-                    ideasData.uncategorized.unshift(...itemsToMove);
+                    ideasData.uncategorized.unshift(...itemsToBrought);
                 }
             }
 
@@ -1481,8 +1482,12 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // Wrap text for idea titles
-                wrapText(ctx, idea.originalIdea, idea.x, idea.y, TEXT_MAX_WIDTH, 14);
+                // NEW: Truncate text for display on nodes
+                let displayedText = idea.originalIdea;
+                if (displayedText.length > MAX_CHARS_PER_NODE) {
+                    displayedText = displayedText.substring(0, MAX_CHARS_PER_NODE - 3) + '...';
+                }
+                wrapText(ctx, displayedText, idea.x, idea.y, TEXT_MAX_WIDTH, 14);
             });
 
             ctx.restore();
