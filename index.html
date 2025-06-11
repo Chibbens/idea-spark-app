@@ -87,10 +87,18 @@
             backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
         }
+        /* Adjusted themed-input to ensure better contrast on dark themes */
         .themed-input {
             background-color: var(--input-bg);
             border-color: var(--glass-border);
             color: var(--text-main);
+            /* Added specific styles for dropdown text visibility */
+            -webkit-appearance: none; /* Remove default dropdown arrow for better styling */
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
         }
         .themed-input::placeholder {
             color: var(--text-secondary);
@@ -608,7 +616,9 @@
                  return;
             }
             moving.ideaId = null; // Ensure single move isn't triggered
-            uiElements.moveFolderSelect.innerHTML = `<option value="uncategorized">Uncategorized</option>`;
+            uiElements.moveFolderSelect.innerHTML = ``; // Clear existing options
+
+            // Removed "Uncategorized" option from the dropdown as it's not a user-managed folder
             ideasData.folders.forEach((folder, index) => {
                 const option = document.createElement('option');
                 option.value = index;
@@ -661,9 +671,9 @@
 
             // Using the custom confirm modal
             showConfirmModal(
-                `Are you sure you want to delete the folder "${folder.name}"? All ideas within it will be moved to Uncategorized. This action cannot be undone for the folder itself.`, // More explicit message
+                `Are you sure you want to delete the folder "${folder.name}"? All ideas within it will be moved to All Saved. This action cannot be undone for the folder itself.`, // More explicit message, now "All Saved"
                 () => { // Confirm action
-                    // Move ideas to uncategorized
+                    // Move ideas to uncategorized (which are displayed in "All Saved")
                     if (folder.ideas && folder.ideas.length > 0) {
                         ideasData.uncategorized.unshift(...folder.ideas);
                     }
@@ -688,7 +698,9 @@
         function openMoveModal(ideaId) {
             moving.ideaId = ideaId;
             selectedItems.clear(); // Ensure bulk selection isn't used for single move
-            uiElements.moveFolderSelect.innerHTML = `<option value="uncategorized">Uncategorized</option>`;
+            uiElements.moveFolderSelect.innerHTML = ``; // Clear existing options
+
+            // Only add user-defined folders to the move dropdown
             ideasData.folders.forEach((folder, index) => {
                 const option = document.createElement('option');
                 option.value = index;
@@ -713,10 +725,14 @@
             }
 
             if (itemsToMove.length > 0) {
-                if (targetFolderValue === 'uncategorized') {
-                    ideasData.uncategorized.unshift(...itemsToMove);
+                // Ideas can only be moved to explicit folders from the dropdown now.
+                // If the target is not a valid folder index (e.g., if somehow a value other than an index slips through),
+                // it should default to uncategorized to prevent data loss.
+                if (typeof parseInt(targetFolderValue) === 'number' && ideasData.folders[parseInt(targetFolderValue)]) {
+                     ideasData.folders[parseInt(targetFolderValue)].ideas.unshift(...itemsToMove);
                 } else {
-                    ideasData.folders[targetFolderValue].ideas.unshift(...itemsToMove);
+                    // Fallback: if somehow an invalid target, move to uncategorized (visible in All Saved)
+                    ideasData.uncategorized.unshift(...itemsToMove);
                 }
             }
 
