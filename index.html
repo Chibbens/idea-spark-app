@@ -468,7 +468,7 @@
 
         async function fetchIdeasFromAI(prompt) {
             // Updated prompt to focus on refinement and conversation
-            const apiKey = "";
+            const apiKey = ""; // Keep this as empty string, Canvas will inject the key
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             // Check if this is a refinement chat or initial idea generation
@@ -477,6 +477,7 @@
 
             if (currentIdea && activeChat.ideaId) {
                 // If it's a refinement chat, build history from the idea's conversation
+                // The API expects roles 'user' and 'model'
                 chatHistory.push({ role: "user", parts: [{ text: `Original idea: "${currentIdea.originalIdea}"` }] });
                 currentIdea.conversation.forEach(msg => {
                     chatHistory.push({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] });
@@ -660,7 +661,10 @@
             ideasData.folders.forEach((folder, index) => {
                 const option = document.createElement('option');
                 option.value = index;
+                // Added a style attribute to the option to ensure text visibility on dark themes
                 option.textContent = folder.name;
+                option.style.color = 'var(--text-main)'; // Set text color from CSS variable
+                option.style.backgroundColor = 'var(--input-bg)'; // Set background color from CSS variable
                 uiElements.moveFolderSelect.appendChild(option);
             });
             uiElements.moveFolderModal.classList.remove('hidden');
@@ -743,6 +747,9 @@
                 const option = document.createElement('option');
                 option.value = index;
                 option.textContent = folder.name;
+                // Added a style attribute to the option to ensure text visibility on dark themes
+                option.style.color = 'var(--text-main)'; // Set text color from CSS variable
+                option.style.backgroundColor = 'var(--input-bg)'; // Set background color from CSS variable
                 uiElements.moveFolderSelect.appendChild(option);
             });
             uiElements.moveFolderModal.classList.remove('hidden');
