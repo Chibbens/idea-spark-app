@@ -24,7 +24,7 @@
             --button-secondary-hover-bg: rgba(255, 255, 255, 0.3);
             --favorite-color: #facc15; /* yellow-400 */
             --font-main: 'Inter', sans-serif;
-            --map-node-bg: rgba(102, 126, 234, 0.8); /* Default for classic theme */
+            /* --map-node-bg: rgba(102, 126, 234, 0.8); /* Removed map-specific variable */
         }
 
         [data-theme="light"] {
@@ -41,7 +41,7 @@
             --button-secondary-bg: rgba(0, 0, 0, 0.05);
             --button-secondary-hover-bg: rgba(0, 0, 0, 0.1);
             --favorite-color: #ca8a04; /* yellow-600 */
-            --map-node-bg: rgba(79, 70, 229, 0.8); /* Indigo-500 for light theme */
+            /* --map-node-bg: rgba(79, 70, 229, 0.8); */
         }
 
         [data-theme="dark"] {
@@ -58,7 +58,7 @@
             --button-secondary-bg: rgba(255, 255, 255, 0.1);
             --button-secondary-hover-bg: rgba(255, 255, 255, 0.2);
             --favorite-color: #facc15;
-            --map-node-bg: rgba(55, 65, 81, 0.8); /* Gray-700 for dark theme */
+            /* --map-node-bg: rgba(55, 65, 81, 0.8); */
         }
 
         [data-theme="hacker"] {
@@ -76,7 +76,7 @@
             --button-secondary-hover-bg: rgba(0, 255, 0, 0.2);
             --favorite-color: #00FF00;
             --font-main: 'Inconsolata', monospace;
-            --map-node-bg: rgba(0, 255, 0, 0.4); /* Green for hacker theme */
+            /* --map-node-bg: rgba(0, 255, 0, 0.4); */
         }
 
         /* NEW THEMES */
@@ -94,7 +94,7 @@
             --button-secondary-bg: rgba(173, 216, 230, 0.25);
             --button-secondary-hover-bg: rgba(173, 216, 230, 0.4);
             --favorite-color: #ffd700; /* Gold */
-            --map-node-bg: rgba(70, 130, 180, 0.8); /* Steel Blue */
+            /* --map-node-bg: rgba(70, 130, 180, 0.8); */
         }
 
         [data-theme="forest-whisper"] {
@@ -111,7 +111,7 @@
             --button-secondary-bg: rgba(144, 238, 144, 0.25);
             --button-secondary-hover-bg: rgba(144, 238, 144, 0.4);
             --favorite-color: #ff8c00; /* DarkOrange */
-            --map-node-bg: rgba(34, 139, 34, 0.8); /* Forest Green */
+            /* --map-node-bg: rgba(34, 139, 34, 0.8); */
         }
 
         [data-theme="sunset-glow"] {
@@ -128,7 +128,7 @@
             --button-secondary-bg: rgba(255, 160, 122, 0.25);
             --button-secondary-hover-bg: rgba(255, 160, 122, 0.4);
             --favorite-color: #4682b4; /* Steel Blue */
-            --map-node-bg: rgba(255, 69, 0, 0.8); /* OrangeRed */
+            /* --map-node-bg: rgba(255, 69, 0, 0.8); */
         }
 
         [data-theme="midnight-sparkle"] {
@@ -145,7 +145,7 @@
             --button-secondary-bg: rgba(72, 61, 139, 0.25);
             --button-secondary-hover-bg: rgba(72, 61, 139, 0.4);
             --favorite-color: #ffd700; /* Gold */
-            --map-node-bg: rgba(75, 0, 130, 0.8); /* Indigo */
+            /* --map-node-bg: rgba(75, 0, 130, 0.8); */
         }
 
         [data-theme="desert-bloom"] {
@@ -162,7 +162,24 @@
             --button-secondary-bg: rgba(245, 222, 179, 0.25);
             --button-secondary-hover-bg: rgba(245, 222, 179, 0.4);
             --favorite-color: #a52a2a; /* Brown */
-            --map-node-bg: rgba(205, 133, 63, 0.8); /* Peru */
+            /* --map-node-bg: rgba(205, 133, 63, 0.8); */
+        }
+
+        [data-theme="mint-fresh"] { /* NEW FREE THEME */
+            --bg-gradient-start: #D1FAE5; /* Emerald 100 */
+            --bg-gradient-end: #A7F3D0; /* Emerald 200 */
+            --text-main: #065F46; /* Emerald 800 */
+            --text-secondary: #047857; /* Emerald 700 */
+            --glass-bg: rgba(209, 250, 229, 0.8);
+            --glass-border: rgba(16, 185, 129, 0.6);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --tab-active-bg: rgba(5, 150, 105, 0.2);
+            --button-primary-bg: #10B981; /* Emerald 500 */
+            --button-primary-text: white;
+            --button-secondary-bg: rgba(5, 150, 105, 0.1);
+            --button-secondary-hover-bg: rgba(5, 150, 105, 0.2);
+            --favorite-color: #FBBF24; /* Amber 400 */
+            /* --map-node-bg: rgba(16, 185, 129, 0.8); */
         }
 
 
@@ -228,13 +245,7 @@
             border-top: 1px solid var(--glass-border);
         }
 
-        /* Styles for the visualization canvas */
-        #ideaMapCanvas {
-            background-color: rgba(0, 0, 0, 0.1);
-            border-radius: 0.75rem;
-            border: 1px solid var(--glass-border);
-            touch-action: none; /* Disable default touch actions for custom panning/zooming */
-        }
+        /* Removed map-specific canvas styles */
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-4">
@@ -293,7 +304,7 @@
                     <div class="flex gap-2 mb-4">
                         <button id="newFolderBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">New Folder</button>
                         <button id="selectModeBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">Select</button>
-                        <button id="viewMapBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">View Map</button>
+                        <!-- Removed viewMapBtn -->
                     </div>
                     <div id="folder-list" class="space-y-2">
                     </div>
@@ -364,31 +375,37 @@
                          <h3 class="text-xl font-bold">Ocean Breeze</h3>
                          <p class="text-sm mt-1" style="color: var(--text-secondary);">Calming blues and greens.</p>
                          <p class="text-5xl font-bold my-4">$0.99</p>
-                         <button id="buyOceanBreezeThemeBtn" class="w-full bg-blue-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                         <button id="buyOceanBreezeThemeBtn" class="w-full bg-blue-400 text-black font-bold py-3 rounded-lg">Purchase</button>
                      </div>
                      <div class="bg-white/10 p-6 rounded-lg text-center">
                          <h3 class="text-xl font-bold">Forest Whisper</h3>
                          <p class="text-sm mt-1" style="color: var(--text-secondary);">Earthy tones inspired by nature.</p>
                          <p class="text-5xl font-bold my-4">$0.99</p>
-                         <button id="buyForestWhisperThemeBtn" class="w-full bg-green-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                         <button id="buyForestWhisperThemeBtn" class="w-full bg-green-400 text-black font-bold py-3 rounded-lg">Purchase</button>
                      </div>
                      <div class="bg-white/10 p-6 rounded-lg text-center">
                          <h3 class="text-xl font-bold">Sunset Glow</h3>
                          <p class="text-sm mt-1" style="color: var(--text-secondary);">Warm oranges and reds.</p>
                          <p class="text-5xl font-bold my-4">$0.99</p>
-                         <button id="buySunsetGlowThemeBtn" class="w-full bg-orange-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                         <button id="buySunsetGlowThemeBtn" class="w-full bg-orange-400 text-black font-bold py-3 rounded-lg">Purchase</button>
                      </div>
                      <div class="bg-white/10 p-6 rounded-lg text-center">
                          <h3 class="text-xl font-bold">Midnight Sparkle</h3>
                          <p class="text-sm mt-1" style="color: var(--text-secondary);">Deep purples and blues with subtle highlights.</p>
                          <p class="text-5xl font-bold my-4">$0.99</p>
-                         <button id="buyMidnightSparkleThemeBtn" class="w-full bg-indigo-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                         <button id="buyMidnightSparkleThemeBtn" class="w-full bg-indigo-400 text-black font-bold py-3 rounded-lg">Purchase</button>
                      </div>
                      <div class="bg-white/10 p-6 rounded-lg text-center">
                          <h3 class="text-xl font-bold">Desert Bloom</h3>
                          <p class="text-sm mt-1" style="color: var(--text-secondary);">Soft desert hues with a touch of warmth.</p>
                          <p class="text-5xl font-bold my-4">$0.99</p>
-                         <button id="buyDesertBloomThemeBtn" class="w-full bg-amber-400 text-black font-bold py-3 rounded-lg">Buy Theme</button>
+                         <button id="buyDesertBloomThemeBtn" class="w-full bg-amber-400 text-black font-bold py-3 rounded-lg">Purchase</button>
+                     </div>
+                     <div class="bg-white/10 p-6 rounded-lg text-center">
+                         <h3 class="text-xl font-bold">Mint Fresh</h3>
+                         <p class="text-sm mt-1" style="color: var(--text-secondary);">A refreshing light green theme.</p>
+                         <p class="text-5xl font-bold my-4">Free</p>
+                         <button id="buyMintFreshThemeBtn" class="w-full bg-emerald-400 text-black font-bold py-3 rounded-lg" disabled>Owned</button>
                      </div>
                  </div>
             </div>
@@ -511,17 +528,14 @@
             linkableIdeasList: document.getElementById('linkableIdeasList'),
             cancelLinkIdeaBtn: document.getElementById('cancelLinkIdeaBtn'),
             // Idea Map Visualization elements
-            viewMapBtn: document.getElementById('viewMapBtn'),
-            ideaMapModal: document.getElementById('ideaMapModal'),
-            closeIdeaMapModalBtn: document.getElementById('closeIdeaMapModalBtn'),
-            ideaMapCanvas: document.getElementById('ideaMapCanvas'),
-            closeIdeaMapBtn: document.getElementById('closeIdeaMapBtn'),
-            // NEW THEME BUTTONS
+            // Removed map elements: viewMapBtn, ideaMapModal, closeIdeaMapModalBtn, ideaMapCanvas, closeIdeaMapBtn
+            // New theme buttons from store
             buyOceanBreezeThemeBtn: document.getElementById('buyOceanBreezeThemeBtn'),
             buyForestWhisperThemeBtn: document.getElementById('buyForestWhisperThemeBtn'),
             buySunsetGlowThemeBtn: document.getElementById('buySunsetGlowThemeBtn'),
             buyMidnightSparkleThemeBtn: document.getElementById('buyMidnightSparkleThemeBtn'),
             buyDesertBloomThemeBtn: document.getElementById('buyDesertBloomThemeBtn'),
+            buyMintFreshThemeBtn: document.getElementById('buyMintFreshThemeBtn'), // NEW Free Theme Button
         };
 
         // --- App State & Config ---
@@ -529,7 +543,7 @@
             folders: [], 
             uncategorized: [], 
             favoriteIDs: [], 
-            ownedThemes: ['classic', 'light', 'dark'], 
+            ownedThemes: ['classic', 'light', 'dark', 'mint-fresh'], // Added 'mint-fresh' here
             trash: [],
             adsRemoved: false,
             unlimitedGenerations: false,
@@ -550,21 +564,7 @@
             pink: 'border-pink-500',
         };
 
-        // Canvas for Idea Map
-        let ctx = null;
-        let camera = { x: 0, y: 0, zoom: 1 };
-        let isDragging = false;
-        let lastPanX = 0;
-        let lastPanY = 0;
-        let initialTouchX = 0; // For tap detection
-        let initialTouchY = 0; // For tap detection
-        let isPinching = false; // To distinguish pinch from single-finger drag
-        const TAP_THRESHOLD_PX = 10; // Max movement for a tap to be recognized
-
-        const NODE_RADIUS = 50;
-        const NODE_PADDING = 10;
-        const TEXT_MAX_WIDTH = NODE_RADIUS * 1.5;
-        const MAX_CHARS_PER_NODE = 25; // Max characters for node text
+        // Removed Canvas for Idea Map variables and functions
 
         // --- Event Listeners ---
         function addEventListeners() {
@@ -603,6 +603,7 @@
             uiElements.buySunsetGlowThemeBtn.addEventListener('click', () => purchaseTheme('sunset-glow'));
             uiElements.buyMidnightSparkleThemeBtn.addEventListener('click', () => purchaseTheme('midnight-sparkle'));
             uiElements.buyDesertBloomThemeBtn.addEventListener('click', () => purchaseTheme('desert-bloom'));
+            // NEW: Free theme button has no action as it's owned by default
 
 
             // Confirmation Modal Buttons
@@ -618,22 +619,7 @@
             uiElements.cancelLinkIdeaBtn.addEventListener('click', () => uiElements.linkIdeaModal.classList.add('hidden'));
             uiElements.linkIdeaSearchInput.addEventListener('input', renderLinkableIdeas);
 
-            // Idea Map Modal Listeners
-            uiElements.viewMapBtn.addEventListener('click', openIdeaMapModal);
-            uiElements.closeIdeaMapModalBtn.addEventListener('click', () => uiElements.ideaMapModal.classList.add('hidden'));
-            uiElements.closeIdeaMapBtn.addEventListener('click', () => uiElements.ideaMapModal.classList.add('hidden'));
-
-            // Canvas interaction listeners
-            uiElements.ideaMapCanvas.addEventListener('mousedown', handleMouseDown);
-            uiElements.ideaMapCanvas.addEventListener('mouseup', handleMouseUp);
-            uiElements.ideaMapCanvas.addEventListener('mousemove', handleMouseMove);
-            uiElements.ideaMapCanvas.addEventListener('wheel', handleWheel, { passive: false });
-
-            uiElements.ideaMapCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-            uiElements.ideaMapCanvas.addEventListener('touchend', handleTouchEnd);
-            uiElements.ideaMapCanvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-
-            window.addEventListener('resize', handleCanvasResize); // Ensure canvas resizes with window
+            // Removed Idea Map Modal Listeners and Canvas interaction listeners
         }
         // --- Core Functions: View Switching, Generation, API Fetching ---
         function switchView(viewName) {
@@ -732,7 +718,7 @@
                         folders: parsedData.folders?.map(f => ({ ...f, isCollapsed: f.isCollapsed ?? false, color: f.color ?? 'default' })) || [],
                         uncategorized: parsedData.uncategorized || [],
                         favoriteIDs: parsedData.favoriteIDs || [],
-                        ownedThemes: parsedData.ownedThemes || ['classic', 'light', 'dark'],
+                        ownedThemes: parsedData.ownedThemes || ['classic', 'light', 'dark', 'mint-fresh'], // Ensure 'mint-fresh' is always owned
                         trash: parsedData.trash || [],
                         adsRemoved: parsedData.adsRemoved || false,
                         unlimitedGenerations: parsedData.unlimitedGenerations || false,
@@ -769,13 +755,7 @@
             }
             uiElements.body.dataset.theme = themeName;
             localStorage.setItem('ideaSparkTheme', themeName);
-            // After setting the theme, update the map node color variable
-            const rootStyle = getComputedStyle(document.documentElement);
-            const mapNodeBgColor = rootStyle.getPropertyValue('--map-node-bg');
-            // If the map is currently open, redraw it
-            if (!uiElements.ideaMapModal.classList.contains('hidden')) {
-                drawIdeaMap();
-            }
+            // No map to redraw
         }
         
         // --- Purchase & UI Update Functions ---
@@ -793,7 +773,7 @@
             showError("You now have unlimited generations! Thank you.");
         }
 
-        // NEW: Generic purchase theme function
+        // Generic purchase theme function
         function purchaseTheme(themeName) {
             console.log(`Simulating '${themeName}' theme purchase...`);
             if (!ideasData.ownedThemes.includes(themeName)) {
@@ -853,6 +833,11 @@
                 const isOwned = ideasData.ownedThemes.includes('desert-bloom');
                 uiElements.buyDesertBloomThemeBtn.disabled = isOwned;
                 uiElements.buyDesertBloomThemeBtn.textContent = isOwned ? 'Owned' : 'Buy Theme';
+            }
+            if (uiElements.buyMintFreshThemeBtn) { // Update for the new free theme
+                const isOwned = ideasData.ownedThemes.includes('mint-fresh');
+                uiElements.buyMintFreshThemeBtn.disabled = isOwned; // Should always be disabled as it's free/owned
+                uiElements.buyMintFreshThemeBtn.textContent = isOwned ? 'Owned' : 'Buy Theme';
             }
         }
         // --- Select Mode & Bulk Actions ---
@@ -1380,16 +1365,17 @@
         function renderThemeList() {
             uiElements.themeList.innerHTML = '';
             const themes = {
-                classic: { name: 'Classic Spark', preview: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-                light: { name: 'Light Mode', preview: 'linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%)' },
-                dark: { name: 'Dark Mode', preview: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)' },
-                hacker: { name: 'Hacker', preview: 'linear-gradient(135deg, #000000 0%, #0D0D0D 100%)' },
+                classic: { name: 'Classic Spark', preview: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', purchasable: false },
+                light: { name: 'Light Mode', preview: 'linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%)', purchasable: false },
+                dark: { name: 'Dark Mode', preview: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)', purchasable: false },
+                hacker: { name: 'Hacker', preview: 'linear-gradient(135deg, #000000 0%, #0D0D0D 100%)', purchasable: true, buttonId: 'buyHackerThemeBtn' },
                 // NEW THEMES
-                'ocean-breeze': { name: 'Ocean Breeze', preview: 'linear-gradient(135deg, #20b2aa 0%, #4682b4 100%)' },
-                'forest-whisper': { name: 'Forest Whisper', preview: 'linear-gradient(135deg, #228b22 0%, #556b2f 100%)' },
-                'sunset-glow': { name: 'Sunset Glow', preview: 'linear-gradient(135deg, #ff7f50 0%, #ff4500 100%)' },
-                'midnight-sparkle': { name: 'Midnight Sparkle', preview: 'linear-gradient(135deg, #191970 0%, #4b0082 100%)' },
-                'desert-bloom': { name: 'Desert Bloom', preview: 'linear-gradient(135deg, #d2b48c 0%, #cd853f 100%)' },
+                'ocean-breeze': { name: 'Ocean Breeze', preview: 'linear-gradient(135deg, #20b2aa 0%, #4682b4 100%)', purchasable: true, buttonId: 'buyOceanBreezeThemeBtn' },
+                'forest-whisper': { name: 'Forest Whisper', preview: 'linear-gradient(135deg, #228b22 0%, #556b2f 100%)', purchasable: true, buttonId: 'buyForestWhisperThemeBtn' },
+                'sunset-glow': { name: 'Sunset Glow', preview: 'linear-gradient(135deg, #ff7f50 0%, #ff4500 100%)', purchasable: true, buttonId: 'buySunsetGlowThemeBtn' },
+                'midnight-sparkle': { name: 'Midnight Sparkle', preview: 'linear-gradient(135deg, #191970 0%, #4b0082 100%)', purchasable: true, buttonId: 'buyMidnightSparkleThemeBtn' },
+                'desert-bloom': { name: 'Desert Bloom', preview: 'linear-gradient(135deg, #d2b48c 0%, #cd853f 100%)', purchasable: true, buttonId: 'buyDesertBloomThemeBtn' },
+                'mint-fresh': { name: 'Mint Fresh', preview: 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)', purchasable: false, buttonId: 'buyMintFreshThemeBtn' }, // Added free theme
             };
 
             Object.keys(themes).forEach(themeKey => {
@@ -1410,12 +1396,15 @@
                 name.className = 'font-semibold';
                 nameWrapper.appendChild(name);
 
-                if(!isOwned) {
+                if(!isOwned && theme.purchasable) {
                     const lock = document.createElement('span');
                     lock.textContent = '🔒 Store';
                     lock.className = 'text-xs bg-yellow-500 text-black px-2 py-1 rounded-full whitespace-nowrap';
                     nameWrapper.appendChild(lock);
+                } else if (!theme.purchasable && isOwned) {
+                    // For free themes, display "Owned" without a lock
                 }
+
 
                 card.appendChild(preview);
                 card.appendChild(nameWrapper);
@@ -1502,7 +1491,9 @@
             }
         }
 
-        // Functions for Idea Map Visualization
+        // Removed all map-related functions
+        // Functions for Idea Map Visualization (REMOVED)
+        /*
         function openIdeaMapModal() {
             uiElements.ideaMapModal.classList.remove('hidden');
             ctx = uiElements.ideaMapCanvas.getContext('2d');
@@ -1511,72 +1502,52 @@
         }
 
         function handleCanvasResize() {
-            // Set canvas display size to fill its container
             uiElements.ideaMapCanvas.style.width = '100%';
             uiElements.ideaMapCanvas.style.height = '100%';
-            // Set canvas internal resolution to match display size for crisp rendering
             uiElements.ideaMapCanvas.width = uiElements.ideaMapCanvas.offsetWidth;
             uiElements.ideaMapCanvas.height = uiElements.ideaMapCanvas.offsetHeight;
-            drawIdeaMap(); // Redraw map after resizing
+            drawIdeaMap();
         }
 
         function drawIdeaMap() {
             if (!ctx) return;
-
             ctx.clearRect(0, 0, uiElements.ideaMapCanvas.width, uiElements.ideaMapCanvas.height);
             ctx.save();
-            
-            // Apply camera transformations
             ctx.translate(uiElements.ideaMapCanvas.width / 2, uiElements.ideaMapCanvas.height / 2);
             ctx.scale(camera.zoom, camera.zoom);
             ctx.translate(-camera.x, -camera.y);
-
             const allIdeas = [...ideasData.uncategorized, ...ideasData.folders.flatMap(f => f.ideas)];
-            // Filter out ideas that are only in trash (unless we want to visualize them)
             const activeIdeas = allIdeas.filter(idea => ideasData.trash.indexOf(idea) === -1);
-
-            // Simple layout algorithm: Circle layout for now
             const centerX = 0;
             const centerY = 0;
-            const radius = 200; // Adjust as needed
+            const radius = 200;
             const angleStep = (Math.PI * 2) / activeIdeas.length;
-
             activeIdeas.forEach((idea, index) => {
-                // Calculate position for circular layout
                 idea.x = centerX + radius * Math.cos(index * angleStep);
                 idea.y = centerY + radius * Math.sin(index * angleStep);
             });
-
-            // Draw links first
             activeIdeas.forEach(idea => {
                 idea.linkedIdeas.forEach(linkedId => {
                     const linkedIdea = activeIdeas.find(i => i.id === linkedId);
                     if (linkedIdea) {
                         ctx.beginPath();
-                        
-                        // Calculate start and end points on the circumference of the circles
                         const angleToLinked = Math.atan2(linkedIdea.y - idea.y, linkedIdea.x - idea.x);
                         const startX = idea.x + NODE_RADIUS * Math.cos(angleToLinked);
                         const startY = idea.y + NODE_RADIUS * Math.sin(angleToLinked);
-
                         const angleFromIdea = Math.atan2(idea.y - linkedIdea.y, idea.x - linkedIdea.x);
                         const endX = linkedIdea.x + NODE_RADIUS * Math.cos(angleFromIdea);
                         const endY = linkedIdea.y + NODE_RADIUS * Math.sin(angleFromIdea);
-
                         ctx.moveTo(startX, startY);
                         ctx.lineTo(endX, endY);
-                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'; // Slightly brighter line
-                        ctx.lineWidth = 1.5; // Slightly thinner line
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                        ctx.lineWidth = 1.5;
                         ctx.stroke();
                     }
                 });
             });
-
             activeIdeas.forEach(idea => {
-                // Draw node circle
                 ctx.beginPath();
                 ctx.arc(idea.x, idea.y, NODE_RADIUS, 0, Math.PI * 2);
-                // Get theme-specific map node background color
                 const rootStyle = getComputedStyle(document.documentElement);
                 const mapNodeBgColor = rootStyle.getPropertyValue('--map-node-bg');
                 ctx.fillStyle = mapNodeBgColor; 
@@ -1584,25 +1555,19 @@
                 ctx.strokeStyle = 'white';
                 ctx.lineWidth = 2;
                 ctx.stroke();
-
-                // Draw node text
-                ctx.fillStyle = rootStyle.getPropertyValue('--text-main'); // Use theme's main text color
+                ctx.fillStyle = rootStyle.getPropertyValue('--text-main');
                 ctx.font = '12px Inter';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                
-                // Truncate text for display on nodes
                 let displayedText = idea.originalIdea;
                 if (displayedText.length > MAX_CHARS_PER_NODE) {
                     displayedText = displayedText.substring(0, MAX_CHARS_PER_NODE - 3) + '...';
                 }
                 wrapText(ctx, displayedText, idea.x, idea.y, TEXT_MAX_WIDTH, 14);
             });
-
             ctx.restore();
         }
 
-        // Helper function for wrapping text on canvas
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(' ');
             let line = '';
@@ -1618,18 +1583,14 @@
                     line = testLine;
                 }
             }
-            lines.push(line); // Add the last line
-
-            // Center the block of text vertically
+            lines.push(line);
             let totalHeight = lines.length * lineHeight;
             let startY = y - (totalHeight / 2) + (lineHeight / 2);
-
             for (let i = 0; i < lines.length; i++) {
                 context.fillText(lines[i], x, startY + (i * lineHeight));
             }
         }
 
-        // Canvas Pan and Zoom Handlers
         function handleMouseDown(e) {
             isDragging = true;
             lastPanX = e.clientX;
@@ -1652,42 +1613,32 @@
         }
 
         function handleWheel(e) {
-            e.preventDefault(); // Prevent page scrolling
+            e.preventDefault();
             const scaleAmount = 1.1;
             const mouseX = e.clientX - uiElements.ideaMapCanvas.getBoundingClientRect().left;
             const mouseY = e.clientY - uiElements.ideaMapCanvas.getBoundingClientRect().top;
-
-            // Calculate mouse position relative to canvas center
             const canvasX = mouseX - uiElements.ideaMapCanvas.width / 2;
             const canvasY = mouseY - uiElements.ideaMapCanvas.height / 2;
-
-            // Adjust camera position to zoom towards the mouse
             camera.x += canvasX / camera.zoom;
             camera.y += canvasY / camera.zoom;
-
-            if (e.deltaY < 0) { // Zoom in
+            if (e.deltaY < 0) {
                 camera.zoom *= scaleAmount;
-            } else { // Zoom out
+            } else {
                 camera.zoom /= scaleAmount;
             }
-
-            // Adjust camera position back after zoom
             camera.x -= canvasX / camera.zoom;
             camera.y -= canvasY / camera.zoom;
-
-            // Clamp zoom to reasonable values
             camera.zoom = Math.max(0.1, Math.min(camera.zoom, 5)); 
             drawIdeaMap();
         }
 
-        // Touch handlers for pan and zoom
         let lastTouches = [];
 
         function handleTouchStart(e) {
-            e.preventDefault(); // Prevent scrolling
+            e.preventDefault();
             isDragging = true;
-            initialTouchX = e.touches[0].clientX; // Record initial touch for tap detection
-            initialTouchY = e.touches[0].clientY; // Record initial touch for tap detection
+            initialTouchX = e.touches[0].clientX;
+            initialTouchY = e.touches[0].clientY;
             lastTouches = Array.from(e.touches);
             if (lastTouches.length === 1) {
                 lastPanX = lastTouches[0].clientX;
@@ -1699,29 +1650,22 @@
 
         function handleTouchEnd(e) {
             isDragging = false;
-            
-            // Check if it was a tap (not a drag or pinch)
             if (!isPinching && e.changedTouches.length === 1) {
                 const deltaX = Math.abs(e.changedTouches[0].clientX - initialTouchX);
                 const deltaY = Math.abs(e.changedTouches[0].clientY - initialTouchY);
-
                 if (deltaX < TAP_THRESHOLD_PX && deltaY < TAP_THRESHOLD_PX) {
-                    // It was a tap, trigger node selection
                     handleCanvasTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                 }
             }
-            isPinching = false; // Reset pinch flag
-            lastTouches = []; // Clear touches
+            isPinching = false;
+            lastTouches = [];
         }
 
         function handleTouchMove(e) {
-            e.preventDefault(); // Prevent scrolling
+            e.preventDefault();
             if (!isDragging) return;
-
             const currentTouches = Array.from(e.touches);
-
             if (currentTouches.length === 1 && lastTouches.length === 1 && !isPinching) {
-                // Single touch for panning
                 const dx = currentTouches[0].clientX - lastPanX;
                 const dy = currentTouches[0].clientY - lastPanY;
                 camera.x -= dx / camera.zoom;
@@ -1729,67 +1673,31 @@
                 lastPanX = currentTouches[0].clientX;
                 lastPanY = currentTouches[0].clientY;
             } else if (currentTouches.length === 2 && lastTouches.length === 2) {
-                // Two touches for zooming (pinch gesture)
                 isPinching = true;
                 const dist1 = Math.hypot(lastTouches[0].clientX - lastTouches[1].clientX,
                                         lastTouches[0].clientY - lastTouches[1].clientY);
                 const dist2 = Math.hypot(currentTouches[0].clientX - currentTouches[1].clientX,
                                         currentTouches[0].clientY - currentTouches[1].clientY);
-
                 const scaleFactor = dist2 / dist1;
-
-                // Calculate midpoint of current touches
                 const midX = (currentTouches[0].clientX + currentTouches[1].clientX) / 2;
                 const midY = (currentTouches[0].clientY + currentTouches[1].clientY) / 2;
-
-                // Transform midpoint to canvas coordinates
                 const canvasX = midX - uiElements.ideaMapCanvas.getBoundingClientRect().left - uiElements.ideaMapCanvas.width / 2;
                 const canvasY = midY - uiElements.ideaMapCanvas.getBoundingClientRect().top - uiElements.ideaMapCanvas.height / 2;
-
-                // Adjust camera position to zoom towards the midpoint
                 camera.x += canvasX / camera.zoom;
                 camera.y += canvasY / camera.zoom;
-
                 camera.zoom *= scaleFactor;
-
                 camera.x -= canvasX / camera.zoom;
                 camera.y -= canvasY / camera.zoom;
-
-                camera.zoom = Math.max(0.1, Math.min(camera.zoom, 5)); // Clamp zoom
-
-                lastTouches = currentTouches; // Update last touches for next move
+                camera.zoom = Math.max(0.1, Math.min(camera.zoom, 5));
+                lastTouches = currentTouches;
             }
             drawIdeaMap();
         }
 
-        // Handle tap on idea node in map
         function handleCanvasTap(clientX, clientY) {
-            if (!ctx) return;
-
-            const rect = uiElements.ideaMapCanvas.getBoundingClientRect();
-            const mouseX = clientX - rect.left;
-            const mouseY = clientY - rect.top;
-
-            // Transform mouse coordinates back to world coordinates
-            const worldX = (mouseX - uiElements.ideaMapCanvas.width / 2) / camera.zoom + camera.x;
-            const worldY = (mouseY - uiElements.ideaMapCanvas.height / 2) / camera.zoom + camera.y;
-
-            const allIdeas = [...ideasData.uncategorized, ...ideasData.folders.flatMap(f => f.ideas)];
-            const activeIdeas = allIdeas.filter(idea => ideasData.trash.indexOf(idea) === -1);
-
-            for (let i = 0; i < activeIdeas.length; i++) {
-                const idea = activeIdeas[i];
-                const distance = Math.sqrt(Math.pow(worldX - idea.x, 2) + Math.pow(worldY - idea.y, 2));
-                if (distance <= NODE_RADIUS) {
-                    // Idea tapped, log its content and show a message
-                    console.log("Idea tapped on map:", idea.originalIdea);
-                    showError(`Tapped Idea: ${idea.originalIdea}`);
-                    // Optionally, you could open a detail modal for the idea here
-                    break;
-                }
-            }
+            // This function is now removed from the code, but kept here for context if needed
         }
-
+        */
         addEventListeners();
     </script>
 </body>
