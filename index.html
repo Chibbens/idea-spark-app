@@ -281,16 +281,24 @@
     <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Refine Idea</h2>
+                <div class="flex items-center gap-2">
+                    <button id="chatBackBtn" class="text-2xl leading-none px-2 py-1 rounded-full hover:bg-white/10 transition">&larr;</button> <!-- NEW -->
+                    <h2 class="text-xl font-bold">Refine Idea</h2>
+                </div>
                 <button id="closeChatModalBtn" class="text-3xl leading-none">&times;</button>
             </div>
             <div id="chat-history" class="flex-grow overflow-y-auto p-2 space-y-4 flex flex-col"></div>
+            <!-- NEW: Prompt Templates Container -->
+            <div id="chatPromptTemplates" class="flex flex-wrap gap-2 p-2 justify-center items-center">
+                <!-- Buttons will be rendered here by JS -->
+            </div>
             <div class="mt-4 flex items-center">
                 <input type="text" id="chat-input" class="flex-grow themed-input border rounded-lg py-2 px-3 focus:outline-none" placeholder="e.g., 'make it shorter'">
                 <button id="chat-send-btn" class="ml-2 bg-indigo-500 p-2 rounded-lg hover:bg-indigo-600 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
+             <button id="saveCustomPromptBtn" class="secondary-btn text-sm font-semibold py-1 px-3 rounded-full mt-2 self-end">Save Custom Prompt</button> <!-- NEW -->
         </div>
     </div>
 
@@ -352,7 +360,7 @@
         </div>
     </div>
 
-    <!-- Idea Map Visualization Modal (NEW) -->
+    <!-- Idea Map Visualization Modal -->
     <div id="ideaMapModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -408,6 +416,10 @@
             closeIdeaMapModalBtn: document.getElementById('closeIdeaMapModalBtn'),
             ideaMapCanvas: document.getElementById('ideaMapCanvas'),
             closeIdeaMapBtn: document.getElementById('closeIdeaMapBtn'),
+            // NEW: Chat prompt templates
+            chatPromptTemplates: document.getElementById('chatPromptTemplates'),
+            saveCustomPromptBtn: document.getElementById('saveCustomPromptBtn'),
+            chatBackBtn: document.getElementById('chatBackBtn'), // NEW
         };
 
         // --- App State & Config ---
@@ -418,7 +430,8 @@
             ownedThemes: ['classic', 'light', 'dark'], 
             trash: [],
             adsRemoved: false,
-            unlimitedGenerations: false
+            unlimitedGenerations: false,
+            customPromptTemplates: [] // NEW: To store user's custom prompts
         };
         let activeFolder = 'all'; // 'all', 'favorites', 'trash', or folder index
         let generatedIdeas = [];
@@ -446,7 +459,18 @@
         const NODE_RADIUS = 50;
         const NODE_PADDING = 10;
         const TEXT_MAX_WIDTH = NODE_RADIUS * 1.5;
-        const MAX_CHARS_PER_NODE = 25; // NEW: Max characters for node text
+        const MAX_CHARS_PER_NODE = 25; // Max characters for node text
+
+        let lastOpenedModal = null; // NEW: To track which modal was open before chat
+
+        const PREDEFINED_CHAT_PROMPTS = [
+            "Make this idea suitable for a mobile app",
+            "Generate a marketing slogan for this idea",
+            "Outline a business model for this idea",
+            "Expand on this idea in more detail",
+            "Simplify this idea",
+            "Give me a step-by-step recipe for this"
+        ];
 
 
         // --- Event Listeners ---
@@ -468,7 +492,10 @@
             uiElements.searchInput.addEventListener('input', renderSavedIdeas);
             uiElements.chatSendBtn.addEventListener('click', handleChatSend);
             uiElements.chatInput.addEventListener('keypress', (e) => (e.key === 'Enter') && handleChatSend());
-            uiElements.closeChatModalBtn.addEventListener('click', () => uiElements.chatModal.classList.add('hidden'));
+            // Modified chat close button logic
+            uiElements.closeChatModalBtn.addEventListener('click', () => uiElements.chatModal.classList.add('hidden')); 
+            uiElements.chatBackBtn.addEventListener('click', handleChatBack); // NEW: Back button for chat
+
             uiElements.cancelMoveBtn.addEventListener('click', () => {
                 uiElements.moveFolderModal.classList.add('hidden');
                 moving.ideaId = null;
@@ -512,6 +539,9 @@
             uiElements.ideaMapCanvas.addEventListener('touchmove', handleTouchMove, { passive: false });
 
             window.addEventListener('resize', handleCanvasResize); // Ensure canvas resizes with window
+
+            // NEW: Custom Prompt Button Listener
+            uiElements.saveCustomPromptBtn.addEventListener('click', saveCustomPrompt);
         }
         // --- Core Functions: View Switching, Generation, API Fetching ---
         function switchView(viewName) {
@@ -613,7 +643,8 @@
                         ownedThemes: parsedData.ownedThemes || ['classic', 'light', 'dark'],
                         trash: parsedData.trash || [],
                         adsRemoved: parsedData.adsRemoved || false,
-                        unlimitedGenerations: parsedData.unlimitedGenerations || false
+                        unlimitedGenerations: parsedData.unlimitedGenerations || false,
+                        customPromptTemplates: parsedData.customPromptTemplates || [], // NEW
                     };
                     // Ensure all ideas have a linkedIdeas array
                     ideasData.uncategorized.forEach(idea => { if (!idea.linkedIdeas) idea.linkedIdeas = []; });
@@ -865,7 +896,7 @@
                      ideasData.folders[parseInt(targetFolderValue)].ideas.unshift(...itemsToMove);
                 } else {
                     // Fallback: if somehow an invalid target, move to uncategorized (visible in All Saved)
-                    ideasData.uncategorized.unshift(...itemsToBrought);
+                    ideasData.uncategorized.unshift(...itemsToMove);
                 }
             }
 
@@ -1272,8 +1303,26 @@
         function openChat(ideaObj) {
             saveGeneratedIdea(ideaObj);
             activeChat.ideaId = ideaObj.id;
+            lastOpenedModal = null; // Reset last opened modal by default
+
+            // Check if map modal is currently open and set lastOpenedModal
+            if (!uiElements.ideaMapModal.classList.contains('hidden')) {
+                lastOpenedModal = 'map';
+                uiElements.ideaMapModal.classList.add('hidden'); // Hide map if chat is opened from it
+            }
+
             renderChatHistory();
+            renderPromptTemplates(); // NEW: Render prompt buttons
             uiElements.chatModal.classList.remove('hidden');
+        }
+
+        // NEW: Function to handle chat back button
+        function handleChatBack() {
+            uiElements.chatModal.classList.add('hidden');
+            if (lastOpenedModal === 'map') {
+                openIdeaMapModal(); // Re-open map if chat was opened from there
+                lastOpenedModal = null; // Reset
+            }
         }
 
         function renderChatHistory() {
@@ -1293,6 +1342,37 @@
                 uiElements.chatHistory.appendChild(bubble);
             });
             uiElements.chatHistory.scrollTop = uiElements.chatHistory.scrollHeight;
+        }
+
+        // NEW: Function to render prompt templates
+        function renderPromptTemplates() {
+            uiElements.chatPromptTemplates.innerHTML = '';
+            const prompts = [...PREDEFINED_CHAT_PROMPTS, ...ideasData.customPromptTemplates.map(p => p.prompt)];
+
+            prompts.slice(0, 5).forEach(promptText => { // Limit to a few prominent prompts
+                const button = document.createElement('button');
+                button.className = 'secondary-btn text-xs font-semibold py-1 px-2 rounded-full transition whitespace-nowrap';
+                button.textContent = promptText.length > 25 ? promptText.substring(0, 22) + '...' : promptText;
+                button.onclick = () => { uiElements.chatInput.value = promptText; handleChatSend(); };
+                uiElements.chatPromptTemplates.appendChild(button);
+            });
+        }
+
+        // NEW: Function to save a custom prompt
+        function saveCustomPrompt() {
+            const promptText = uiElements.chatInput.value.trim();
+            if (!promptText) {
+                showError("Please type a prompt in the chat input first.");
+                return;
+            }
+
+            const promptName = prompt(`Name your custom prompt:`);
+            if (promptName) {
+                ideasData.customPromptTemplates.push({ name: promptName, prompt: promptText });
+                saveData();
+                renderPromptTemplates();
+                showError("Custom prompt saved!");
+            }
         }
 
         async function handleChatSend() {
@@ -1448,19 +1528,30 @@
 
             activeIdeas.forEach((idea, index) => {
                 // Calculate position for circular layout
-                const angle = index * angleStep;
-                idea.x = centerX + radius * Math.cos(angle);
-                idea.y = centerY + radius * Math.sin(angle);
+                idea.x = centerX + radius * Math.cos(index * angleStep);
+                idea.y = centerY + radius * Math.sin(index * angleStep);
+            });
 
-                // Draw links first
+            // Draw links first
+            activeIdeas.forEach(idea => {
                 idea.linkedIdeas.forEach(linkedId => {
                     const linkedIdea = activeIdeas.find(i => i.id === linkedId);
                     if (linkedIdea) {
                         ctx.beginPath();
-                        ctx.moveTo(idea.x, idea.y);
-                        ctx.lineTo(linkedIdea.x, linkedIdea.y);
-                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                        ctx.lineWidth = 2;
+                        
+                        // Calculate start and end points on the circumference of the circles
+                        const angleToLinked = Math.atan2(linkedIdea.y - idea.y, linkedIdea.x - idea.x);
+                        const startX = idea.x + NODE_RADIUS * Math.cos(angleToLinked);
+                        const startY = idea.y + NODE_RADIUS * Math.sin(angleToLinked);
+
+                        const angleFromIdea = Math.atan2(idea.y - linkedIdea.y, idea.x - linkedIdea.x);
+                        const endX = linkedIdea.x + NODE_RADIUS * Math.cos(angleFromIdea);
+                        const endY = linkedIdea.y + NODE_RADIUS * Math.sin(angleFromIdea);
+
+                        ctx.moveTo(startX, startY);
+                        ctx.lineTo(endX, endY);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'; // Slightly brighter line
+                        ctx.lineWidth = 1.5; // Slightly thinner line
                         ctx.stroke();
                     }
                 });
@@ -1482,7 +1573,7 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // NEW: Truncate text for display on nodes
+                // Truncate text for display on nodes
                 let displayedText = idea.originalIdea;
                 if (displayedText.length > MAX_CHARS_PER_NODE) {
                     displayedText = displayedText.substring(0, MAX_CHARS_PER_NODE - 3) + '...';
@@ -1657,7 +1748,6 @@
                 if (distance <= NODE_RADIUS) {
                     // Idea clicked, open its chat modal
                     openChat(idea);
-                    uiElements.ideaMapModal.classList.add('hidden'); // Close map modal
                     break;
                 }
             }
