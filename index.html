@@ -94,7 +94,7 @@
             opacity: 0.7;
         }
 
-        .tab.active { background-color: var(--tab-active-bg); }
+        .tab.active, .secondary-btn.active { background-color: var(--tab-active-bg); }
         .chat-bubble { padding: 0.75rem 1rem; border-radius: 1rem; max-width: 80%; }
         .chat-bubble-user { background-color: rgba(255, 255, 255, 0.2); align-self: flex-end; border-bottom-right-radius: 0.25rem; }
         .chat-bubble-ai { background-color: rgba(0, 0, 0, 0.2); align-self: flex-start; border-bottom-left-radius: 0.25rem; }
@@ -225,7 +225,6 @@
 
     </div>
     <!-- Modals -->
-    <!-- Modals (Unchanged) -->
     <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -259,8 +258,6 @@
             <div id="color-options" class="grid grid-cols-5 gap-4"></div>
         </div>
     </div>
-
-    <!-- *** NEW: New Folder Modal *** -->
     
     <div id="newFolderModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-6 max-w-sm w-full">
@@ -331,7 +328,10 @@
             uiElements.chatSendBtn.addEventListener('click', handleChatSend);
             uiElements.chatInput.addEventListener('keypress', (e) => (e.key === 'Enter') && handleChatSend());
             uiElements.closeChatModalBtn.addEventListener('click', () => uiElements.chatModal.classList.add('hidden'));
-            uiElements.cancelMoveBtn.addEventListener('click', () => uiElements.moveFolderModal.classList.add('hidden'));
+            uiElements.cancelMoveBtn.addEventListener('click', () => {
+                uiElements.moveFolderModal.classList.add('hidden');
+                moving.ideaId = null;
+            });
             uiElements.confirmMoveBtn.addEventListener('click', handleConfirmMove);
             uiElements.folderColorModal.addEventListener('click', (e) => (e.target === uiElements.folderColorModal) && uiElements.folderColorModal.classList.add('hidden'));
             uiElements.selectModeBtn.addEventListener('click', toggleSelectMode);
@@ -341,7 +341,7 @@
         // --- Core Functions: View Switching, Generation, API Fetching ---
         function switchView(viewName) {
             editing.ideaId = null;
-            selectMode = false; // Always exit select mode when switching views
+            if (selectMode) toggleSelectMode(); // Always exit select mode when switching views
             const views = ['generator', 'saved', 'store', 'themes'];
             views.forEach(v => {
                 uiElements[`${v}View`].classList.toggle('hidden', v !== viewName);
@@ -410,7 +410,14 @@
                     ideasData.ownedThemes = parsedData.ownedThemes || ['classic', 'light', 'dark'];
                     ideasData.trash = parsedData.trash || [];
                 } else {
-                    ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'], trash: [] };
+                     // Initialize with some default data for demonstration
+                    ideasData = { 
+                        folders: [{name: "My Great Ideas", ideas: [{id: "default1", originalIdea: "A space opera about sentient cheese.", conversation: []}], isCollapsed: false, color: 'blue'}],
+                        uncategorized: [{id: "default2", originalIdea: "A cooking show hosted by a robot.", conversation: []}],
+                        favoriteIDs: ["default1"], 
+                        ownedThemes: ['classic', 'light', 'dark'], 
+                        trash: [] 
+                    };
                 }
             } catch (e) {
                 console.error("Failed to load data, resetting.", e);
@@ -431,21 +438,83 @@
 
         function setTheme(themeName) {
             if (!ideasData.ownedThemes.includes(themeName)) {
-                alert(`Theme "${themeName}" is not owned. Visit the store to purchase.`);
+                showError(`Theme "${themeName}" is not owned. Visit the store.`);
                 return;
             }
             uiElements.body.dataset.theme = themeName;
             localStorage.setItem('ideaSparkTheme', themeName);
         }
+        
+        // --- Select Mode & Bulk Actions (NEW & UPDATED) ---
+        function toggleSelectMode() {
+            selectMode = !selectMode;
+            uiElements.selectModeBtn.textContent = selectMode ? 'Cancel' : 'Select';
+            uiElements.selectModeBtn.classList.toggle('active', selectMode);
+            uiElements.bulkActionBar.classList.toggle('hidden', !selectMode);
 
-        function toggleTheme() {
-            const themes = ideasData.ownedThemes;
-            const currentTheme = uiElements.body.dataset.theme || 'classic';
-            const currentIndex = themes.indexOf(currentTheme);
-            const nextIndex = (currentIndex + 1) % themes.length;
-            setTheme(themes[nextIndex]);
+            if (!selectMode) {
+                selectedItems.clear();
+            }
+            updateSelectionCount();
+            renderSavedIdeas();
         }
 
+        function toggleIdeaSelection(ideaId, event) {
+            event.stopPropagation();
+            const checkbox = document.querySelector(`input[type="checkbox"][data-id="${ideaId}"]`);
+            
+            if (selectedItems.has(ideaId)) {
+                selectedItems.delete(ideaId);
+                if(checkbox) checkbox.checked = false;
+            } else {
+                selectedItems.add(ideaId);
+                 if(checkbox) checkbox.checked = true;
+            }
+            updateSelectionCount();
+            const card = document.querySelector(`div.glass-card[data-id='${ideaId}']`);
+            if(card) {
+                card.classList.toggle('ring-2', selectedItems.has(ideaId));
+                card.classList.toggle('ring-indigo-400', selectedItems.has(ideaId));
+            }
+        }
+
+        function updateSelectionCount() {
+            const count = selectedItems.size;
+            uiElements.selectionCount.textContent = `${count} item${count === 1 ? '' : 's'} selected`;
+        }
+
+        function handleBulkMove() {
+            if (selectedItems.size === 0) {
+                 showError("Select items to move first.");
+                 return;
+            }
+            moving.ideaId = null; // Ensure single move isn't triggered
+            uiElements.moveFolderSelect.innerHTML = `<option value="uncategorized">Uncategorized</option>`;
+            ideasData.folders.forEach((folder, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = folder.name;
+                uiElements.moveFolderSelect.appendChild(option);
+            });
+            uiElements.moveFolderModal.classList.remove('hidden');
+        }
+
+        function handleBulkDelete() {
+            if (selectedItems.size === 0) {
+                showError("Select items to delete first.");
+                return;
+            }
+             if (window.confirm(`Are you sure you want to move ${selectedItems.size} items to the trash?`)) {
+                selectedItems.forEach(id => {
+                    const idea = findAndRemoveIdea(id);
+                    if (idea) {
+                        ideasData.trash.unshift(idea);
+                    }
+                });
+                toggleSelectMode();
+                saveData();
+            }
+        }
         // --- Folder, Search, Filter & Idea Actions ---
         function handleConfirmNewFolder() {
             const folderName = uiElements.newFolderName.value.trim();
@@ -455,12 +524,13 @@
                 uiElements.newFolderName.value = '';
                 uiElements.newFolderModal.classList.add('hidden');
             } else if (folderName) {
-                alert("A folder with that name already exists.");
+                showError("A folder with that name already exists.");
             }
         }
 
         function openMoveModal(ideaId) {
             moving.ideaId = ideaId;
+            selectedItems.clear(); // Ensure bulk selection isn't used for single move
             uiElements.moveFolderSelect.innerHTML = `<option value="uncategorized">Uncategorized</option>`;
             ideasData.folders.forEach((folder, index) => {
                 const option = document.createElement('option');
@@ -472,24 +542,31 @@
         }
 
         function handleConfirmMove() {
-            if (!moving.ideaId) return;
-            const ideaToMove = findAndRemoveIdea(moving.ideaId);
-            if (!ideaToMove) return;
-
             const targetFolderValue = uiElements.moveFolderSelect.value;
-            if (targetFolderValue === 'uncategorized') {
-                ideasData.uncategorized.unshift(ideaToMove);
-            } else {
-                ideasData.folders[targetFolderValue].ideas.unshift(ideaToMove);
+            const itemsToMove = [];
+
+            if (selectedItems.size > 0) { // Bulk move
+                selectedItems.forEach(id => {
+                    const idea = findAndRemoveIdea(id);
+                    if(idea) itemsToMove.push(idea);
+                });
+            } else if (moving.ideaId) { // Single move
+                const idea = findAndRemoveIdea(moving.ideaId);
+                if(idea) itemsToMove.push(idea);
+            }
+
+            if (itemsToMove.length > 0) {
+                if (targetFolderValue === 'uncategorized') {
+                    ideasData.uncategorized.unshift(...itemsToMove);
+                } else {
+                    ideasData.folders[targetFolderValue].ideas.unshift(...itemsToMove);
+                }
             }
 
             saveData();
             uiElements.moveFolderModal.classList.add('hidden');
-        }
-
-        function toggleFolder(folderIndex) {
-            ideasData.folders[folderIndex].isCollapsed = !ideasData.folders[folderIndex].isCollapsed;
-            renderSavedIdeas();
+            if(selectMode) toggleSelectMode(); // Exit select mode after bulk move
+            moving.ideaId = null;
         }
 
         function openColorModal(folderIndex) {
@@ -568,12 +645,8 @@
 
         function toggleEditMode(ideaId) {
             editing.ideaId = editing.ideaId === ideaId ? null : ideaId;
-            if (!uiElements.savedView.classList.contains('hidden')) {
-                renderSavedIdeas();
-            }
-            if (!uiElements.generatorView.classList.contains('hidden')) {
-                displayGeneratedIdeas();
-            }
+            renderSavedIdeas();
+            displayGeneratedIdeas();
         }
 
         function handleEditSave(ideaId) {
@@ -582,7 +655,6 @@
             if (textarea && ideaLocation) {
                 const newText = textarea.value;
                 ideaLocation.array[ideaLocation.ideaIndex].originalIdea = newText;
-
                 editing.ideaId = null;
                 saveData();
             } else if (textarea) { 
@@ -601,7 +673,6 @@
         function findAndRemoveIdea(id) {
             const location = findIdeaLocation(id);
             if(location) {
-                // Also remove from favorites if it exists there
                 const favIndex = ideasData.favoriteIDs.indexOf(id);
                 if (favIndex > -1) ideasData.favoriteIDs.splice(favIndex, 1);
                 return location.array.splice(location.ideaIndex, 1)[0];
@@ -620,18 +691,39 @@
             if(trashIndex > -1) return { array: ideasData.trash, ideaIndex: trashIndex, type: 'trash' };
             return null;
         }
-
         function createIdeaCard(ideaObj, type) {
             const ideaElement = document.createElement('div');
-            ideaElement.className = 'glass-card p-4 rounded-lg flex flex-col gap-3';
+            ideaElement.className = 'glass-card p-4 rounded-lg flex items-center gap-4 transition-all';
             ideaElement.dataset.id = ideaObj.id;
+            
+            // Add selection elements if in select mode
+            if (selectMode && (type === 'saved' || type === 'trash')) {
+                 ideaElement.classList.add('cursor-pointer');
+                 if (selectedItems.has(ideaObj.id)) {
+                    ideaElement.classList.add('ring-2', 'ring-indigo-400');
+                 }
+                 ideaElement.onclick = (e) => toggleIdeaSelection(ideaObj.id, e);
+
+                 const checkbox = document.createElement('input');
+                 checkbox.type = 'checkbox';
+                 checkbox.dataset.id = ideaObj.id;
+                 checkbox.checked = selectedItems.has(ideaObj.id);
+                 checkbox.className = 'form-checkbox h-5 w-5 rounded bg-white/20 border-white/30 text-indigo-500 focus:ring-indigo-500/50 shrink-0';
+                 // Prevent card click from firing when the checkbox itself is clicked
+                 checkbox.onclick = (e) => e.stopPropagation(); 
+                 ideaElement.appendChild(checkbox);
+            }
+
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'flex-grow flex flex-col gap-3';
+
             const mainContent = document.createElement('div');
             const isEditingThis = editing.ideaId === ideaObj.id;
 
             if (isEditingThis) {
                 const textarea = document.createElement('textarea');
                 textarea.value = ideaObj.originalIdea;
-                textarea.className = 'flex-grow w-full bg-white/20 border border-white/30 rounded-lg py-1 px-2 focus:outline-none themed-input';
+                textarea.className = 'w-full bg-white/20 border border-white/30 rounded-lg py-1 px-2 focus:outline-none themed-input';
                 textarea.rows = '1';
                 textarea.addEventListener('input', () => { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; });
                 setTimeout(() => { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight) + 'px'; }, 0);
@@ -639,42 +731,47 @@
             } else {
                 mainContent.textContent = ideaObj.originalIdea;
             }
-            ideaElement.appendChild(mainContent);
+            contentWrapper.appendChild(mainContent);
 
             const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'flex items-center gap-2 justify-end border-t border-white/10 pt-3 mt-3 flex-wrap';
+            buttonContainer.className = 'flex items-center gap-2 justify-end border-t border-white/10 pt-3 flex-wrap';
+            
+            // Hide buttons when in select mode for saved/trash items
+            if(selectMode && (type ==='saved' || type === 'trash')) {
+                buttonContainer.classList.add('hidden');
+            }
 
             if(isEditingThis) {
                  const saveBtn = document.createElement('button');
                  saveBtn.className = 'bg-green-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-green-500/100 transition';
                  saveBtn.innerHTML = `Save`;
-                 saveBtn.onclick = () => handleEditSave(ideaObj.id);
+                 saveBtn.onclick = (e) => { e.stopPropagation(); handleEditSave(ideaObj.id); };
                  buttonContainer.appendChild(saveBtn);
                  const cancelBtn = document.createElement('button');
                  cancelBtn.className = 'bg-gray-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-gray-500/100 transition';
                  cancelBtn.textContent = 'Cancel';
-                 cancelBtn.onclick = () => toggleEditMode(ideaObj.id);
+                 cancelBtn.onclick = (e) => { e.stopPropagation(); toggleEditMode(ideaObj.id); };
                  buttonContainer.appendChild(cancelBtn);
             } else if (type === 'trash') {
                 const restoreBtn = document.createElement('button');
                 restoreBtn.className = 'bg-green-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-green-500/100 transition';
                 restoreBtn.innerHTML = `Restore`;
-                restoreBtn.onclick = () => restoreIdea(ideaObj.id);
+                restoreBtn.onclick = (e) => { e.stopPropagation(); restoreIdea(ideaObj.id); };
                 buttonContainer.appendChild(restoreBtn);
 
                 const permDeleteBtn = document.createElement('button');
                 permDeleteBtn.className = 'bg-red-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-red-500/100 transition';
                 permDeleteBtn.innerHTML = `Delete Forever`;
-                permDeleteBtn.onclick = () => permanentlyDeleteIdea(ideaObj.id);
+                permDeleteBtn.onclick = (e) => { e.stopPropagation(); permanentlyDeleteIdea(ideaObj.id); };
                 buttonContainer.appendChild(permDeleteBtn);
-            } else {
+            } else { // Standard buttons for saved and generated cards
                 const isFavorite = ideasData.favoriteIDs.includes(ideaObj.id);
                 const favButton = document.createElement('button');
                 favButton.className = `p-2 rounded-full transition`;
                 favButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
                 favButton.style.color = isFavorite ? 'var(--favorite-color)' : 'var(--text-secondary)';
                 favButton.firstElementChild.style.fill = isFavorite ? 'var(--favorite-color)' : 'none';
-                favButton.onclick = () => toggleFavorite(ideaObj.id);
+                favButton.onclick = (e) => { e.stopPropagation(); toggleFavorite(ideaObj.id); };
                 buttonContainer.appendChild(favButton);
 
                 if (type === 'generated') {
@@ -683,40 +780,40 @@
                      saveButton.className = 'text-sm font-semibold py-1 px-3 rounded-full transition flex-shrink-0 secondary-btn';
                      saveButton.innerHTML = isSaved ? `Unsave` : `Save`;
                      if (isSaved) saveButton.classList.add('bg-red-500/80', 'hover:bg-red-500/100');
-                     saveButton.onclick = isSaved ? () => unsaveIdea(ideaObj.id) : () => saveGeneratedIdea(ideaObj);
+                     saveButton.onclick = (e) => { e.stopPropagation(); isSaved ? unsaveIdea(ideaObj.id) : saveGeneratedIdea(ideaObj); };
                      buttonContainer.appendChild(saveButton);
                 } else {
                     const moveBtn = document.createElement('button');
                     moveBtn.className = 'secondary-btn text-sm font-semibold py-1 px-3 rounded-full transition';
                     moveBtn.innerHTML = `Move`;
-                    moveBtn.onclick = () => openMoveModal(ideaObj.id);
+                    moveBtn.onclick = (e) => { e.stopPropagation(); openMoveModal(ideaObj.id); };
                     buttonContainer.appendChild(moveBtn);
                 }
 
                 const chatButton = document.createElement('button');
                 chatButton.className = 'secondary-btn text-sm font-semibold py-1 px-3 rounded-full transition';
                 chatButton.innerHTML = `Chat`;
-                chatButton.onclick = () => openChat(ideaObj);
+                chatButton.onclick = (e) => { e.stopPropagation(); openChat(ideaObj); };
                 buttonContainer.appendChild(chatButton);
 
                 const editButton = document.createElement('button');
                 editButton.className = 'secondary-btn p-2 rounded-full transition';
                 editButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-                editButton.onclick = () => toggleEditMode(ideaObj.id);
+                editButton.onclick = (e) => { e.stopPropagation(); toggleEditMode(ideaObj.id); };
                 buttonContainer.appendChild(editButton);
 
                 if (type !== 'generated') {
                      const deleteButton = document.createElement('button');
                      deleteButton.className = 'bg-red-500/50 text-white p-2 rounded-full hover:bg-red-500/80 transition';
                      deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-                     deleteButton.onclick = () => deleteIdea(ideaObj.id);
+                     deleteButton.onclick = (e) => { e.stopPropagation(); deleteIdea(ideaObj.id); };
                      buttonContainer.appendChild(deleteButton);
                 }
             }
-            ideaElement.appendChild(buttonContainer);
+            contentWrapper.appendChild(buttonContainer);
+            ideaElement.appendChild(contentWrapper);
             return ideaElement;
         }
-
         function displayGeneratedIdeas() {
             uiElements.resultsDiv.innerHTML = ''; 
             generatedIdeas.forEach((ideaObj) => {
@@ -736,7 +833,7 @@
                 const span = document.createElement('span');
                 span.textContent = text;
                 btn.appendChild(span);
-                btn.onclick = () => { activeFolder = value; renderFolderList(); renderSavedIdeas(); };
+                btn.onclick = () => { if(!selectMode) { activeFolder = value; renderFolderList(); renderSavedIdeas(); } };
                 return btn;
             };
             uiElements.folderList.appendChild(createFolderItem('All Saved', 'all'));
@@ -750,11 +847,6 @@
                     colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(index); };
                     folderBtn.appendChild(colorBtn);
                 }
-                const colorBtn = document.createElement('button');
-                colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
-                colorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
-                colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(index); };
-                folderBtn.appendChild(colorBtn);
                 uiElements.folderList.appendChild(folderBtn);
             });
             uiElements.folderList.appendChild(createFolderItem('Trash', 'trash'));
@@ -876,12 +968,16 @@
                 renderChatHistory();
             } catch (error) {
                 console.error("Chat generation error:", error);
+                 showError("Could not get chat response.");
             }
         }
 
         function showError(message) {
             uiElements.errorMessage.textContent = message;
             uiElements.errorMessage.classList.remove('hidden');
+            setTimeout(() => {
+                uiElements.errorMessage.classList.add('hidden');
+            }, 3000);
         }
 
         addEventListeners();
