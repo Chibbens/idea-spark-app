@@ -20,6 +20,7 @@
             --button-primary-text: #5b21b6;
             --button-secondary-bg: rgba(255, 255, 255, 0.2);
             --button-secondary-hover-bg: rgba(255, 255, 255, 0.3);
+            --favorite-color: #facc15; /* yellow-400 */
             --font-main: 'Inter', sans-serif;
         }
 
@@ -36,6 +37,7 @@
             --button-primary-text: white;
             --button-secondary-bg: rgba(0, 0, 0, 0.05);
             --button-secondary-hover-bg: rgba(0, 0, 0, 0.1);
+            --favorite-color: #ca8a04; /* yellow-600 */
         }
 
         [data-theme="dark"] {
@@ -51,6 +53,7 @@
             --button-primary-text: white;
             --button-secondary-bg: rgba(255, 255, 255, 0.1);
             --button-secondary-hover-bg: rgba(255, 255, 255, 0.2);
+            --favorite-color: #facc15;
         }
 
         [data-theme="hacker"] {
@@ -66,6 +69,7 @@
             --button-primary-text: #000000;
             --button-secondary-bg: rgba(0, 255, 0, 0.1);
             --button-secondary-hover-bg: rgba(0, 255, 0, 0.2);
+            --favorite-color: #00FF00;
             --font-main: 'Inconsolata', monospace;
         }
 
@@ -98,6 +102,7 @@
         .folder-item.active { background-color: var(--tab-active-bg); }
         .secondary-btn {
             background-color: var(--button-secondary-bg);
+            color: var(--text-main);
         }
         .secondary-btn:hover {
             background-color: var(--button-secondary-hover-bg);
@@ -256,7 +261,7 @@
             chatHistory: document.getElementById('chat-history'), chatInput: document.getElementById('chat-input'), chatSendBtn: document.getElementById('chat-send-btn'),
             newFolderBtn: document.getElementById('newFolderBtn'), searchInput: document.getElementById('searchInput'), 
             folderList: document.getElementById('folder-list'),
-            themeSwitcher: document.getElementById('themeSwitcher'), themeList: document.getElementById('theme-list'),
+            themeList: document.getElementById('theme-list'),
             moveFolderModal: document.getElementById('moveFolderModal'), moveFolderSelect: document.getElementById('moveFolderSelect'),
             cancelMoveBtn: document.getElementById('cancelMoveBtn'), confirmMoveBtn: document.getElementById('confirmMoveBtn'),
             folderColorModal: document.getElementById('folderColorModal'), colorOptions: document.getElementById('color-options'),
@@ -447,7 +452,7 @@
 
         function toggleFolder(folderIndex) {
             ideasData.folders[folderIndex].isCollapsed = !ideasData.folders[folderIndex].isCollapsed;
-            renderSavedIdeas(); // Just re-render, don't save yet
+            renderSavedIdeas();
         }
 
         function openColorModal(folderIndex) {
@@ -625,8 +630,9 @@
             } else {
                 const isFavorite = ideasData.favoriteIDs.includes(ideaObj.id);
                 const favButton = document.createElement('button');
-                favButton.className = `p-2 rounded-full transition ${isFavorite ? 'text-yellow-400' : 'text-white/50 hover:text-white'}`;
+                favButton.className = `p-2 rounded-full transition text-yellow-400`;
                 favButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" ${isFavorite ? 'fill="currentColor"' : 'fill="none"'} stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+                favButton.style.color = isFavorite ? 'var(--favorite-color)' : 'var(--text-secondary)';
                 favButton.onclick = () => toggleFavorite(ideaObj.id);
                 buttonContainer.appendChild(favButton);
 
@@ -679,9 +685,9 @@
         
         function renderFolderList() {
             uiElements.folderList.innerHTML = '';
-            const createFolderItem = (text, value) => {
+            const createFolderItem = (text, value, colorClass) => {
                 const btn = document.createElement('button');
-                btn.className = `folder-item w-full text-left p-2 rounded-lg font-semibold transition flex justify-between items-center ${activeFolder === value ? 'active' : 'hover:bg-white/10'}`;
+                btn.className = `folder-item w-full text-left p-2 rounded-lg font-semibold transition flex justify-between items-center border-l-4 ${activeFolder === value ? 'active' : ''} ${colorClass || 'border-transparent'}`;
                 const span = document.createElement('span');
                 span.textContent = text;
                 btn.appendChild(span);
@@ -691,12 +697,14 @@
             uiElements.folderList.appendChild(createFolderItem('All Saved', 'all'));
             uiElements.folderList.appendChild(createFolderItem('Favorites', 'favorites'));
             ideasData.folders.forEach((folder, index) => {
-                const folderBtn = createFolderItem(folder.name, index);
-                const colorBtn = document.createElement('button');
-                colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
-                colorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--text-main)"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
-                colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(index); };
-                folderBtn.appendChild(colorBtn);
+                const folderBtn = createFolderItem(folder.name, index, FOLDER_COLORS[folder.color]);
+                if(activeFolder === index) {
+                    const colorBtn = document.createElement('button');
+                    colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
+                    colorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
+                    colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(index); };
+                    folderBtn.appendChild(colorBtn);
+                }
                 uiElements.folderList.appendChild(folderBtn);
             });
             uiElements.folderList.appendChild(createFolderItem('Trash', 'trash'));
@@ -751,6 +759,7 @@
                 preview.style.background = theme.preview;
                 
                 const nameWrapper = document.createElement('div');
+                nameWrapper.className = 'flex items-center gap-2';
                 const name = document.createElement('span');
                 name.textContent = theme.name;
                 name.className = 'font-semibold';
@@ -759,7 +768,7 @@
                 if(!isOwned) {
                     const lock = document.createElement('span');
                     lock.textContent = '🔒 Store';
-                    lock.className = 'text-xs bg-yellow-500 text-black px-2 py-1 rounded-full ml-2 whitespace-nowrap';
+                    lock.className = 'text-xs bg-yellow-500 text-black px-2 py-1 rounded-full whitespace-nowrap';
                     nameWrapper.appendChild(lock);
                 }
 
