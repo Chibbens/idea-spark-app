@@ -107,9 +107,6 @@
         .secondary-btn:hover {
             background-color: var(--button-secondary-hover-bg);
         }
-        .idea-card.selected {
-            outline: 2px solid var(--favorite-color);
-        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-4">
@@ -176,6 +173,7 @@
                 </aside>
 
                 <!-- Right Panel: Ideas -->
+                <main class="w-2/3">
                 <main class="w-2/3 relative">
                     <div class="flex gap-2 mb-4">
                         <input type="text" id="searchInput" class="flex-grow w-full border rounded-full py-1 px-3 focus:outline-none themed-input" placeholder="Search ideas...">
@@ -199,6 +197,7 @@
             <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8">
                 <h2 class="text-3xl font-bold text-center mb-6">Your Themes</h2>
                 <div id="theme-list" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Themes will be populated by JS -->
                 </div>
             </div>
         </div>
@@ -209,12 +208,14 @@
                  <h2 class="text-3xl font-bold text-center mb-2">Store & Premium</h2>
                  <p class="text-center mb-6" style="color:var(--text-secondary)">Enhance your experience.</p>
                  <div class="grid md:grid-cols-2 gap-6 mb-6">
+                     <!-- Unlimited Generations Card -->
                      <div class="bg-white/10 p-6 rounded-lg text-center flex flex-col">
                          <h3 class="text-xl font-bold">Unlimited Generations</h3>
                          <p class="text-sm mt-1 flex-grow" style="color: var(--text-secondary);">Remove the daily idea generation limit forever.</p>
                          <p class="text-5xl font-bold my-4">$4.99</p>
                          <button class="w-full bg-yellow-500 text-black font-bold py-3 rounded-lg">Go Premium</button>
                      </div>
+                     <!-- Hacker Theme Card -->
                      <div class="bg-white/10 p-6 rounded-lg text-center">
                          <h3 class="text-xl font-bold font-mono text-green-400">Hacker Theme</h3>
                          <p class="text-sm mt-1" style="color: var(--text-secondary);">Unlock the classic green-on-black terminal theme.</p>
@@ -228,6 +229,7 @@
     </div>
 
     <!-- Modals -->
+    <!-- Modals (Unchanged) -->
     <div id="chatModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -262,6 +264,8 @@
         </div>
     </div>
 
+    <!-- *** NEW: New Folder Modal *** -->
+    
     <div id="newFolderModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-6 max-w-sm w-full">
             <h3 class="font-bold text-lg mb-4">Create New Folder</h3>
@@ -301,7 +305,6 @@
         let editing = { ideaId: null };
         let activeChat = { ideaId: null };
         let moving = { ideaId: null };
-        let moving = { ideaId: null, isBulk: false };
         let changingColorFolderIndex = null;
         let selectMode = false;
         let selectedItems = new Set();
@@ -403,12 +406,10 @@
         function loadIdeasData() {
             try {
                 const data = localStorage.getItem('ideaSparkData_v5');
-                const data = localStorage.getItem('ideaSparkData_v6');
                 if (data) {
                     const parsedData = JSON.parse(data);
                     // Ensure all new properties exist for older data structures
                     ideasData.folders = parsedData.folders?.map(f => ({ ...f, isCollapsed: f.isCollapsed ?? false, color: f.color ?? 'default' })) || [];
-                    ideasData.folders = parsedData.folders?.map(f => ({ ...f, id: f.id || `folder_${Math.random()}`, isCollapsed: f.isCollapsed ?? false, color: f.color ?? 'default' })) || [];
                     ideasData.uncategorized = parsedData.uncategorized || [];
                     ideasData.favoriteIDs = parsedData.favoriteIDs || [];
                     ideasData.ownedThemes = parsedData.ownedThemes || ['classic', 'light', 'dark'];
@@ -424,7 +425,6 @@
 
         function saveData() {
             localStorage.setItem('ideaSparkData_v5', JSON.stringify(ideasData));
-            localStorage.setItem('ideaSparkData_v6', JSON.stringify(ideasData));
             if (!uiElements.savedView.classList.contains('hidden')) {
                 renderFolderList();
                 renderSavedIdeas();
@@ -456,7 +456,6 @@
             const folderName = uiElements.newFolderName.value.trim();
             if (folderName && !ideasData.folders.some(f => f.name === folderName)) {
                 ideasData.folders.push({ name: folderName, ideas: [], isCollapsed: false, color: 'default' });
-                ideasData.folders.push({ id: `folder_${Date.now()}`, name: folderName, ideas: [], isCollapsed: false, color: 'default' });
                 saveData();
                 uiElements.newFolderName.value = '';
                 uiElements.newFolderModal.classList.add('hidden');
@@ -485,68 +484,12 @@
             const targetFolderValue = uiElements.moveFolderSelect.value;
             if (targetFolderValue === 'uncategorized') {
                 ideasData.uncategorized.unshift(ideaToMove);
-            if (moving.isBulk) {
-                moving.ideaId.forEach(id => {
-                    const ideaToMove = findAndRemoveIdea(id);
-                    if (ideaToMove) {
-                        const targetFolderValue = uiElements.moveFolderSelect.value;
-                        if (targetFolderValue === 'uncategorized') ideasData.uncategorized.unshift(ideaToMove);
-                        else ideasData.folders[targetFolderValue].ideas.unshift(ideaToMove);
-                    }
-                });
-                toggleSelectMode(); // Exit select mode after bulk action
             } else {
                 ideasData.folders[targetFolderValue].ideas.unshift(ideaToMove);
-                 if (!moving.ideaId) return;
-                 const ideaToMove = findAndRemoveIdea(moving.ideaId);
-                 if (!ideaToMove) return;
-                 const targetFolderValue = uiElements.moveFolderSelect.value;
-                 if (targetFolderValue === 'uncategorized') ideasData.uncategorized.unshift(ideaToMove);
-                 else ideasData.folders[targetFolderValue].ideas.unshift(ideaToMove);
             }
-            
+
             saveData();
             uiElements.moveFolderModal.classList.add('hidden');
-        }
-
-        function toggleSelectMode() {
-            selectMode = !selectMode;
-            selectedItems.clear();
-            uiElements.selectModeBtn.textContent = selectMode ? 'Cancel' : 'Select';
-            uiElements.bulkActionBar.classList.toggle('hidden', !selectMode || selectedItems.size === 0);
-            renderSavedIdeas();
-        }
-
-        function handleItemSelection(ideaId) {
-            if (selectedItems.has(ideaId)) {
-                selectedItems.delete(ideaId);
-            } else {
-                selectedItems.add(ideaId);
-            }
-            uiElements.selectionCount.textContent = `${selectedItems.size} item${selectedItems.size === 1 ? '' : 's'} selected`;
-            uiElements.bulkActionBar.classList.toggle('hidden', selectedItems.size === 0);
-            renderSavedIdeas(); // Re-render to show selection state
-        }
-        
-        function handleBulkDelete() {
-            if (selectedItems.size === 0) return;
-            selectedItems.forEach(id => deleteIdea(id));
-            selectedItems.clear();
-            toggleSelectMode(); // Exit select mode after action
-        }
-        
-        function handleBulkMove() {
-             if (selectedItems.size === 0) return;
-             // Use the move modal, but for multiple items
-             moving.ideaId = [...selectedItems]; // Store array of IDs
-             uiElements.moveFolderSelect.innerHTML = `<option value="uncategorized">Uncategorized</option>`;
-             ideasData.folders.forEach((folder, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = folder.name;
-                uiElements.moveFolderSelect.appendChild(option);
-             });
-             uiElements.moveFolderModal.classList.remove('hidden');
         }
 
         function toggleFolder(folderIndex) {
@@ -666,7 +609,6 @@
                 // Also remove from favorites if it exists there
                 const favIndex = ideasData.favoriteIDs.indexOf(id);
                 if (favIndex > -1) ideasData.favoriteIDs.splice(favIndex, 1);
-                ideasData.favoriteIDs = ideasData.favoriteIDs.filter(favId => favId !== id);
                 return location.array.splice(location.ideaIndex, 1)[0];
             }
             return null;
@@ -683,73 +625,11 @@
             if(trashIndex > -1) return { array: ideasData.trash, ideaIndex: trashIndex, type: 'trash' };
             return null;
         }
-        
-        // --- Multi-Select ---
-        function toggleSelectMode() {
-            selectMode = !selectMode;
-            selectedItems.clear();
-            uiElements.selectModeBtn.textContent = selectMode ? 'Cancel' : 'Select';
-            uiElements.selectModeBtn.classList.toggle('active', selectMode);
-            updateBulkActionBar();
-            renderSavedIdeas();
-        }
 
-        function handleItemSelection(ideaId) {
-            if (selectedItems.has(ideaId)) {
-                selectedItems.delete(ideaId);
-            } else {
-                selectedItems.add(ideaId);
-            }
-            updateBulkActionBar();
-            renderSavedIdeas();
-        }
-        
-        function updateBulkActionBar() {
-             uiElements.bulkActionBar.classList.toggle('hidden', selectedItems.size === 0);
-             uiElements.selectionCount.textContent = `${selectedItems.size} item${selectedItems.size === 1 ? '' : 's'} selected`;
-        }
-        
-        function handleBulkDelete() {
-            if (selectedItems.size === 0 || !confirm(`Are you sure you want to delete ${selectedItems.size} items?`)) return;
-            selectedItems.forEach(id => deleteIdea(id));
-            selectedItems.clear();
-            toggleSelectMode();
-        }
-        
-        function handleBulkMove() {
-             if (selectedItems.size === 0) return;
-             moving = { ideaId: [...selectedItems], isBulk: true };
-             uiElements.moveFolderSelect.innerHTML = `<option value="uncategorized">Uncategorized</option>`;
-             ideasData.folders.forEach((folder, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = folder.name;
-                uiElements.moveFolderSelect.appendChild(option);
-             });
-             uiElements.moveFolderModal.classList.remove('hidden');
-        }
-
-
-        // --- UI Rendering ---
         function createIdeaCard(ideaObj, type) {
             const ideaElement = document.createElement('div');
-            const isSelected = selectedItems.has(ideaObj.id);
-            ideaElement.className = `glass-card p-4 rounded-lg flex flex-col gap-3 idea-card ${isSelected ? 'selected' : ''}`;
-            ideaElement.className = `glass-card p-4 rounded-lg flex items-center gap-3 idea-card ${isSelected ? 'selected' : ''}`;
+            ideaElement.className = 'glass-card p-4 rounded-lg flex flex-col gap-3';
             ideaElement.dataset.id = ideaObj.id;
-
-            if (selectMode && type !== 'generated' && type !== 'trash') {
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = isSelected;
-                checkbox.className = 'w-5 h-5 rounded themed-input flex-shrink-0';
-                checkbox.onchange = () => handleItemSelection(ideaObj.id);
-                ideaElement.appendChild(checkbox);
-            }
-            
-            const mainContentWrapper = document.createElement('div');
-            mainContentWrapper.className = 'flex-grow';
-            
             const mainContent = document.createElement('div');
             const isEditingThis = editing.ideaId === ideaObj.id;
 
@@ -765,12 +645,9 @@
                 mainContent.textContent = ideaObj.originalIdea;
             }
             ideaElement.appendChild(mainContent);
-            mainContentWrapper.appendChild(mainContent);
-            ideaElement.appendChild(mainContentWrapper);
 
             const buttonContainer = document.createElement('div');
             buttonContainer.className = 'flex items-center gap-2 justify-end border-t border-white/10 pt-3 mt-3 flex-wrap';
-            buttonContainer.className = 'flex items-center gap-2 justify-end flex-shrink-0';
 
             if(isEditingThis) {
                  const saveBtn = document.createElement('button');
@@ -786,7 +663,6 @@
             } else if (type === 'trash') {
                 const restoreBtn = document.createElement('button');
                 restoreBtn.className = 'bg-green-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-green-500/100 transition';
-                restoreBtn.className = 'secondary-btn text-sm font-semibold py-1 px-3 rounded-full transition';
                 restoreBtn.innerHTML = `Restore`;
                 restoreBtn.onclick = () => restoreIdea(ideaObj.id);
                 buttonContainer.appendChild(restoreBtn);
@@ -794,18 +670,9 @@
                 const permDeleteBtn = document.createElement('button');
                 permDeleteBtn.className = 'bg-red-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-red-500/100 transition';
                 permDeleteBtn.innerHTML = `Delete Forever`;
-                permDeleteBtn.innerHTML = `Delete`;
                 permDeleteBtn.onclick = () => permanentlyDeleteIdea(ideaObj.id);
                 buttonContainer.appendChild(permDeleteBtn);
             } else {
-                if (selectMode) {
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.checked = isSelected;
-                    checkbox.className = 'w-5 h-5 rounded';
-                    checkbox.onchange = () => handleItemSelection(ideaObj.id);
-                    buttonContainer.appendChild(checkbox);
-                }
                 const isFavorite = ideasData.favoriteIDs.includes(ideaObj.id);
                 const favButton = document.createElement('button');
                 favButton.className = `p-2 rounded-full transition`;
@@ -888,6 +755,11 @@
                     colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(index); };
                     folderBtn.appendChild(colorBtn);
                 }
+                const colorBtn = document.createElement('button');
+                colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
+                colorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
+                colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(index); };
+                folderBtn.appendChild(colorBtn);
                 uiElements.folderList.appendChild(folderBtn);
             });
             uiElements.folderList.appendChild(createFolderItem('Trash', 'trash'));
@@ -1016,7 +888,7 @@
             uiElements.errorMessage.textContent = message;
             uiElements.errorMessage.classList.remove('hidden');
         }
-More actions
+
         addEventListeners();
     </script>
 </body>
