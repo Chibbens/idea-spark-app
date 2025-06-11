@@ -449,7 +449,8 @@
             uiElements.errorMessage.classList.add('hidden');
             uiElements.generateBtn.disabled = true;
             try {
-                const ideas = await fetchIdeasFromAI(`Generate a numbered list of 5 creative and unique ideas for the following topic: "${topic}". Return only the numbered list.`);
+                // Modified to call the serverless function instead of direct API
+                const ideas = await fetchIdeasFromAI(`Generate a numbered list of 5 creative and unique ideas for the following topic: "${topic}". Return only the numbered list.`, false);
                 generatedIdeas = ideas.map(idea => ({
                     id: `gen_${Date.now()}_${Math.random()}`,
                     originalIdea: idea.replace(/^\d+\.\s*/, ''),
@@ -466,55 +467,41 @@
             }
         }
 
-        async function fetchIdeasFromAI(prompt) {
-            // Updated prompt to focus on refinement and conversation
-            const apiKey = ""; // Keep this as empty string, Canvas will inject the key
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        // Modified fetchIdeasFromAI to use the Netlify serverless function
+        async function fetchIdeasFromAI(prompt, isChat = false) {
+            const functionUrl = '/.netlify/functions/generate-ideas'; // Serverless function endpoint
 
-            // Check if this is a refinement chat or initial idea generation
-            let currentIdea = findIdeaById(activeChat.ideaId);
-            let chatHistory = [];
-
-            if (currentIdea && activeChat.ideaId) {
-                // If it's a refinement chat, build history from the idea's conversation
-                // The API expects roles 'user' and 'model'
-                chatHistory.push({ role: "user", parts: [{ text: `Original idea: "${currentIdea.originalIdea}"` }] });
-                currentIdea.conversation.forEach(msg => {
-                    chatHistory.push({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] });
-                });
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] }); // Add the latest user prompt for refinement
+            let payloadContent;
+            if (isChat) {
+                // If it's a chat, `prompt` already contains the full conversation history
+                payloadContent = prompt;
             } else {
-                // If it's initial idea generation, just use the provided prompt
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                // For initial generation, `prompt` is just the topic
+                payloadContent = prompt;
             }
 
-            const payload = { contents: chatHistory };
-
-            const response = await fetch(apiUrl, {
+            const response = await fetch(functionUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ prompt: payloadContent }) // Pass the prompt to the serverless function
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error("API Error Response:", errorData);
-                throw new Error(`AI generation failed: ${errorData.error.message || response.statusText}`);
+                console.error("Serverless function error response:", errorData);
+                throw new Error(`Serverless function failed with status ${response.status}: ${errorData.message || response.statusText}`);
             }
 
-            const result = await response.json();
+            const data = await response.json();
 
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0) {
-                // For initial generation, return as an array of ideas (split by numbered list)
-                if (!activeChat.ideaId) { // This implies initial generation
-                    return result.candidates[0].content.parts[0].text.split('\n').filter(line => line.trim().length > 0);
-                } else { // This implies chat refinement, return as single string response
-                    return [result.candidates[0].content.parts[0].text];
-                }
+            if (data.ideas) {
+                // For initial generation, data.ideas will be an array of strings
+                return data.ideas;
+            } else if (data.response) {
+                // For chat, data.response will be a single string
+                return [data.response];
             } else {
-                throw new Error("Invalid response structure from AI.");
+                throw new Error(data.error || "Invalid response from serverless function.");
             }
         }
 
@@ -1046,7 +1033,7 @@
                 const btn = document.createElement('button');
                 let colorClass = 'border-transparent';
                 if (typeof value === 'number') {
-                    colorClass = FOLDER_COLORS[ideasData.folders[value].color] || FOLDER_COLORS.default;
+                    colorClass = FOLDER_COLORS[ideasData.folders[value].color] || FFOLDER_COLORS.default;
                 }
                 btn.className = `folder-item w-full text-left p-2 rounded-lg font-semibold transition flex justify-between items-center border-l-4 ${activeFolder === value ? 'active' : 'hover:bg-white/10'} ${colorClass}`;
                 
@@ -1194,14 +1181,15 @@
             // Construct the prompt for AI to continue the conversation about the specific idea
             let conversationPrompt = `Given the original idea: "${idea.originalIdea}".\n`;
             conversationPrompt += `Previous conversation history:\n`;
-            idea.conversation.slice(0, -1).forEach(msg => { // Exclude the very last user message to avoid duplication in context
+            idea.conversation.forEach(msg => { // Send all messages in context, including the last user message
                 conversationPrompt += `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.text}\n`;
             });
-            conversationPrompt += `User: ${userInput}\n`; // Add the latest user message
+            // Removed adding the latest user message separately as it's now included in the loop above.
             conversationPrompt += `\nBased on the original idea and the conversation history, please respond to the user's last message. Focus on discussing, refining, or elaborating on the *original idea*. Do not generate new, unrelated ideas. Provide a direct, conversational response.`;
 
             try {
-                const response = await fetchIdeasFromAI(conversationPrompt); // Pass the detailed prompt
+                // Pass true for isChat to indicate this is a chat refinement request
+                const response = await fetchIdeasFromAI(conversationPrompt, true); 
                 const aiResponse = response[0]; // fetchIdeasFromAI now returns a single string for chat
                 idea.conversation.push({ role: 'ai', text: aiResponse });
                 saveData();
