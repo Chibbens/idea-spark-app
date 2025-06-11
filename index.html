@@ -301,6 +301,18 @@
             </div>
         </div>
     </div>
+
+    <!-- Custom Confirmation Modal (NEW) -->
+    <div id="customConfirmModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl p-6 max-w-sm w-full text-center">
+            <h3 id="confirmModalTitle" class="font-bold text-lg mb-4">Confirm Action</h3>
+            <p id="confirmModalMessage" class="mb-6" style="color: var(--text-secondary);">Are you sure you want to proceed?</p>
+            <div class="flex justify-center gap-4">
+                <button id="confirmModalCancelBtn" class="secondary-btn font-semibold py-2 px-6 rounded-full">Cancel</button>
+                <button id="confirmModalConfirmBtn" class="bg-red-500 font-semibold py-2 px-6 rounded-full">Confirm</button>
+            </div>
+        </div>
+    </div>
     <script>
         // --- DOM Elements ---
         const uiElements = {
@@ -323,6 +335,12 @@
             cancelNewFolderBtn: document.getElementById('cancelNewFolderBtn'), confirmNewFolderBtn: document.getElementById('confirmNewFolderBtn'),
             adBanner: document.getElementById('adBanner'), removeAdsBtn: document.getElementById('removeAdsBtn'),
             unlimitedBtn: document.getElementById('unlimitedBtn'), buyHackerThemeBtn: document.getElementById('buyHackerThemeBtn'),
+            // New confirmation modal elements
+            customConfirmModal: document.getElementById('customConfirmModal'),
+            confirmModalTitle: document.getElementById('confirmModalTitle'),
+            confirmModalMessage: document.getElementById('confirmModalMessage'),
+            confirmModalCancelBtn: document.getElementById('confirmModalCancelBtn'),
+            confirmModalConfirmBtn: document.getElementById('confirmModalConfirmBtn'),
         };
 
         // --- App State & Config ---
@@ -351,7 +369,7 @@
             pink: 'border-pink-500',
         };
 
-        // --- Event Listeners (UPDATED) ---
+        // --- Event Listeners ---
         function addEventListeners() {
             window.addEventListener('load', () => {
                 loadIdeasData();
@@ -384,6 +402,15 @@
             uiElements.removeAdsBtn.addEventListener('click', purchaseRemoveAds);
             uiElements.unlimitedBtn.addEventListener('click', purchaseUnlimitedGenerations);
             uiElements.buyHackerThemeBtn.addEventListener('click', purchaseHackerTheme);
+
+            // NEW: Confirmation Modal Buttons
+            uiElements.confirmModalCancelBtn.addEventListener('click', () => uiElements.customConfirmModal.classList.add('hidden'));
+            // Adding a new listener for the confirm button directly here
+            uiElements.confirmModalConfirmBtn.addEventListener('click', () => {
+                if (confirmActionCallback) {
+                    confirmActionCallback();
+                }
+            });
         }
         // --- Core Functions: View Switching, Generation, API Fetching ---
         function switchView(viewName) {
@@ -487,7 +514,7 @@
             localStorage.setItem('ideaSparkTheme', themeName);
         }
         
-        // --- Purchase & UI Update Functions (UPDATED) ---
+        // --- Purchase & UI Update Functions ---
         function purchaseRemoveAds() {
             console.log("Simulating 'Remove Ads' purchase...");
             ideasData.adsRemoved = true;
@@ -596,19 +623,26 @@
                 showError("Select items to delete first.");
                 return;
             }
-             if (window.confirm(`Are you sure you want to move ${selectedItems.size} items to the trash?`)) {
-                selectedItems.forEach(id => {
-                    const idea = findAndRemoveIdea(id);
-                    if (idea) {
-                        ideasData.trash.unshift(idea);
-                    }
-                });
-                toggleSelectMode();
-                saveData();
-            }
+            // Using the custom confirm modal
+            showConfirmModal(
+                `Are you sure you want to move ${selectedItems.size} item${selectedItems.size === 1 ? '' : 's'} to the trash?`,
+                () => { // Confirm action
+                    selectedItems.forEach(id => {
+                        const idea = findAndRemoveIdea(id);
+                        if (idea) {
+                            ideasData.trash.unshift(idea);
+                        }
+                    });
+                    toggleSelectMode();
+                    saveData();
+                },
+                () => { // Cancel action
+                    // Do nothing or provide feedback
+                }
+            );
         }
         
-        // --- Folder, Search, Filter & Idea Actions (UPDATED) ---
+        // --- Folder, Search, Filter & Idea Actions ---
         function handleConfirmNewFolder() {
             const folderName = uiElements.newFolderName.value.trim();
             if (folderName && !ideasData.folders.some(f => f.name === folderName)) {
@@ -625,22 +659,30 @@
             const folder = ideasData.folders[folderIndex];
             if (!folder) return;
 
-            if (window.confirm(`Are you sure you want to delete the folder "${folder.name}"? All ideas within it will be moved to Uncategorized.`)) {
-                // Move ideas to uncategorized
-                if (folder.ideas && folder.ideas.length > 0) {
-                    ideasData.uncategorized.unshift(...folder.ideas);
-                }
+            // Using the custom confirm modal
+            showConfirmModal(
+                `Are you sure you want to delete the folder "${folder.name}"? All ideas within it will be moved to Uncategorized. This action cannot be undone for the folder itself.`, // More explicit message
+                () => { // Confirm action
+                    // Move ideas to uncategorized
+                    if (folder.ideas && folder.ideas.length > 0) {
+                        ideasData.uncategorized.unshift(...folder.ideas);
+                    }
 
-                // If the currently active folder is the one being deleted, switch to 'all'
-                if (activeFolder === folderIndex) {
-                    activeFolder = 'all';
-                }
+                    // If the currently active folder is the one being deleted, switch to 'all'
+                    if (activeFolder === folderIndex) {
+                        activeFolder = 'all';
+                    }
 
-                // Remove the folder
-                ideasData.folders.splice(folderIndex, 1);
-                
-                saveData();
-            }
+                    // Remove the folder
+                    ideasData.folders.splice(folderIndex, 1);
+                    
+                    saveData();
+                },
+                () => { // Cancel action
+                    // Do nothing or provide feedback
+                },
+                "Delete Folder Confirmation" // Custom title for folder deletion
+            );
         }
 
         function openMoveModal(ideaId) {
@@ -921,7 +963,7 @@
                 if (type !== 'generated') {
                      const deleteButton = document.createElement('button');
                      deleteButton.className = 'bg-red-500/50 text-white p-2 rounded-full hover:bg-red-500/80 transition';
-                     deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                     deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 0 0 1 2 2v2"></path></svg>`;
                      deleteButton.onclick = (e) => { e.stopPropagation(); deleteIdea(ideaObj.id); };
                      buttonContainer.appendChild(deleteButton);
                 }
@@ -1110,6 +1152,33 @@
             setTimeout(() => {
                 uiElements.errorMessage.classList.add('hidden');
             }, 3000);
+        }
+
+        // Generic function to show custom confirmation modal
+        let confirmActionCallback = null;
+        let cancelActionCallback = null;
+
+        function showConfirmModal(message, onConfirm, onCancel, title = "Confirm Action") {
+            uiElements.confirmModalTitle.textContent = title;
+            uiElements.confirmModalMessage.textContent = message;
+            uiElements.customConfirmModal.classList.remove('hidden');
+            
+            // Clear previous event listeners to prevent unintended multiple calls
+            uiElements.confirmModalConfirmBtn.removeEventListener('click', confirmActionCallback);
+            uiElements.confirmModalCancelBtn.removeEventListener('click', cancelActionCallback);
+
+            confirmActionCallback = () => {
+                uiElements.customConfirmModal.classList.add('hidden');
+                onConfirm();
+            };
+            cancelActionCallback = () => {
+                uiElements.customConfirmModal.classList.add('hidden');
+                if (onCancel) onCancel();
+            };
+
+            // Add new listeners
+            uiElements.confirmModalConfirmBtn.addEventListener('click', confirmActionCallback);
+            uiElements.confirmModalCancelBtn.addEventListener('click', cancelActionCallback);
         }
 
         addEventListeners();
