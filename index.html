@@ -87,16 +87,14 @@
             backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
         }
-        /* Adjusted themed-input to ensure better contrast on dark themes */
+        /* Refined themed-input styles for text inputs vs. selects */
         .themed-input {
             background-color: var(--input-bg);
             border-color: var(--glass-border);
             color: var(--text-main);
-            /* Removed specific styles for dropdown arrow for text inputs */
-            -webkit-appearance: none; 
+            -webkit-appearance: none; /* Remove default styling for all */
             appearance: none;
-            /* Ensure the background image is only for select elements, if needed */
-            background-image: none; 
+            background-image: none; /* Ensure no dropdown arrow by default */
             background-repeat: no-repeat;
             background-position: right 0.75rem center;
             background-size: 1.5em 1.5em;
@@ -104,9 +102,6 @@
         /* Re-add dropdown arrow specifically for select elements */
         select.themed-input {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1.5em 1.5em;
         }
 
         .themed-input::placeholder {
@@ -140,6 +135,14 @@
             justify-content: center;
             z-index: 100;
             border-top: 1px solid var(--glass-border);
+        }
+
+        /* Styles for the visualization canvas */
+        #ideaMapCanvas {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 0.75rem;
+            border: 1px solid var(--glass-border);
+            touch-action: none; /* Disable default touch actions for custom panning/zooming */
         }
     </style>
 </head>
@@ -199,6 +202,7 @@
                     <div class="flex gap-2 mb-4">
                         <button id="newFolderBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">New Folder</button>
                         <button id="selectModeBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">Select</button>
+                        <button id="viewMapBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">View Map</button> <!-- NEW -->
                     </div>
                     <div id="folder-list" class="space-y-2">
                     </div>
@@ -319,7 +323,7 @@
         </div>
     </div>
 
-    <!-- Custom Confirmation Modal (NEW) -->
+    <!-- Custom Confirmation Modal -->
     <div id="customConfirmModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="glass-card rounded-2xl p-6 max-w-sm w-full text-center">
             <h3 id="confirmModalTitle" class="font-bold text-lg mb-4">Confirm Action</h3>
@@ -330,6 +334,40 @@
             </div>
         </div>
     </div>
+
+    <!-- Link Idea Modal -->
+    <div id="linkIdeaModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Link Idea To...</h2>
+                <button id="closeLinkIdeaModalBtn" class="text-3xl leading-none">&times;</button>
+            </div>
+            <input type="text" id="linkIdeaSearchInput" class="w-full themed-input border rounded-lg py-2 px-3 focus:outline-none mb-4" placeholder="Search ideas to link...">
+            <div id="linkableIdeasList" class="flex-grow overflow-y-auto p-2 space-y-3">
+                <!-- Linkable ideas will be populated here -->
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button id="cancelLinkIdeaBtn" class="secondary-btn font-semibold py-2 px-4 rounded-full">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Idea Map Visualization Modal (NEW) -->
+    <div id="ideaMapModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl p-4 md:p-6 max-w-lg w-full h-full max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Idea Map</h2>
+                <button id="closeIdeaMapModalBtn" class="text-3xl leading-none">&times;</button>
+            </div>
+            <div class="flex-grow relative overflow-hidden rounded-lg">
+                <canvas id="ideaMapCanvas" class="w-full h-full"></canvas>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button id="closeIdeaMapBtn" class="secondary-btn font-semibold py-2 px-4 rounded-full">Close Map</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- DOM Elements ---
         const uiElements = {
@@ -352,12 +390,24 @@
             cancelNewFolderBtn: document.getElementById('cancelNewFolderBtn'), confirmNewFolderBtn: document.getElementById('confirmNewFolderBtn'),
             adBanner: document.getElementById('adBanner'), removeAdsBtn: document.getElementById('removeAdsBtn'),
             unlimitedBtn: document.getElementById('unlimitedBtn'), buyHackerThemeBtn: document.getElementById('buyHackerThemeBtn'),
-            // New confirmation modal elements
+            // Confirmation modal elements
             customConfirmModal: document.getElementById('customConfirmModal'),
             confirmModalTitle: document.getElementById('confirmModalTitle'),
             confirmModalMessage: document.getElementById('confirmModalMessage'),
             confirmModalCancelBtn: document.getElementById('confirmModalCancelBtn'),
             confirmModalConfirmBtn: document.getElementById('confirmModalConfirmBtn'),
+            // Link Idea Modal elements
+            linkIdeaModal: document.getElementById('linkIdeaModal'),
+            closeLinkIdeaModalBtn: document.getElementById('closeLinkIdeaModalBtn'),
+            linkIdeaSearchInput: document.getElementById('linkIdeaSearchInput'),
+            linkableIdeasList: document.getElementById('linkableIdeasList'),
+            cancelLinkIdeaBtn: document.getElementById('cancelLinkIdeaBtn'),
+            // Idea Map Visualization elements
+            viewMapBtn: document.getElementById('viewMapBtn'),
+            ideaMapModal: document.getElementById('ideaMapModal'),
+            closeIdeaMapModalBtn: document.getElementById('closeIdeaMapModalBtn'),
+            ideaMapCanvas: document.getElementById('ideaMapCanvas'),
+            closeIdeaMapBtn: document.getElementById('closeIdeaMapBtn'),
         };
 
         // --- App State & Config ---
@@ -378,6 +428,7 @@
         let changingColorFolderIndex = null;
         let selectMode = false;
         let selectedItems = new Set();
+        let linkingIdeaId = null; // Store the ID of the idea being linked from
         const FREE_GENERATIONS_LIMIT = 5;
         let generationCount = 0;
         const FOLDER_COLORS = {
@@ -385,6 +436,17 @@
             green: 'border-green-500', yellow: 'border-yellow-500', purple: 'border-purple-500',
             pink: 'border-pink-500',
         };
+
+        // Canvas for Idea Map
+        let ctx = null;
+        let camera = { x: 0, y: 0, zoom: 1 };
+        let isDragging = false;
+        let lastPanX = 0;
+        let lastPanY = 0;
+        const NODE_RADIUS = 50;
+        const NODE_PADDING = 10;
+        const TEXT_MAX_WIDTH = NODE_RADIUS * 1.5;
+
 
         // --- Event Listeners ---
         function addEventListeners() {
@@ -420,14 +482,35 @@
             uiElements.unlimitedBtn.addEventListener('click', purchaseUnlimitedGenerations);
             uiElements.buyHackerThemeBtn.addEventListener('click', purchaseHackerTheme);
 
-            // NEW: Confirmation Modal Buttons
+            // Confirmation Modal Buttons
             uiElements.confirmModalCancelBtn.addEventListener('click', () => uiElements.customConfirmModal.classList.add('hidden'));
-            // Adding a new listener for the confirm button directly here
             uiElements.confirmModalConfirmBtn.addEventListener('click', () => {
                 if (confirmActionCallback) {
                     confirmActionCallback();
                 }
             });
+
+            // Link Idea Modal Listeners
+            uiElements.closeLinkIdeaModalBtn.addEventListener('click', () => uiElements.linkIdeaModal.classList.add('hidden'));
+            uiElements.cancelLinkIdeaBtn.addEventListener('click', () => uiElements.linkIdeaModal.classList.add('hidden'));
+            uiElements.linkIdeaSearchInput.addEventListener('input', renderLinkableIdeas);
+
+            // Idea Map Modal Listeners
+            uiElements.viewMapBtn.addEventListener('click', openIdeaMapModal);
+            uiElements.closeIdeaMapModalBtn.addEventListener('click', () => uiElements.ideaMapModal.classList.add('hidden'));
+            uiElements.closeIdeaMapBtn.addEventListener('click', () => uiElements.ideaMapModal.classList.add('hidden'));
+
+            // Canvas interaction listeners
+            uiElements.ideaMapCanvas.addEventListener('mousedown', handleMouseDown);
+            uiElements.ideaMapCanvas.addEventListener('mouseup', handleMouseUp);
+            uiElements.ideaMapCanvas.addEventListener('mousemove', handleMouseMove);
+            uiElements.ideaMapCanvas.addEventListener('wheel', handleWheel, { passive: false });
+
+            uiElements.ideaMapCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            uiElements.ideaMapCanvas.addEventListener('touchend', handleTouchEnd);
+            uiElements.ideaMapCanvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+            window.addEventListener('resize', handleCanvasResize); // Ensure canvas resizes with window
         }
         // --- Core Functions: View Switching, Generation, API Fetching ---
         function switchView(viewName) {
@@ -463,7 +546,8 @@
                 generatedIdeas = ideas.map(idea => ({
                     id: `gen_${Date.now()}_${Math.random()}`,
                     originalIdea: idea.replace(/^\d+\.\s*/, ''),
-                    conversation: []
+                    conversation: [],
+                    linkedIdeas: [] // Initialize linkedIdeas array
                 }));
                 displayGeneratedIdeas();
                 if (!ideasData.unlimitedGenerations) generationCount++;
@@ -530,6 +614,13 @@
                         adsRemoved: parsedData.adsRemoved || false,
                         unlimitedGenerations: parsedData.unlimitedGenerations || false
                     };
+                    // Ensure all ideas have a linkedIdeas array
+                    ideasData.uncategorized.forEach(idea => { if (!idea.linkedIdeas) idea.linkedIdeas = []; });
+                    ideasData.folders.forEach(folder => {
+                        folder.ideas.forEach(idea => { if (!idea.linkedIdeas) idea.linkedIdeas = []; });
+                    });
+                    ideasData.trash.forEach(idea => { if (!idea.linkedIdeas) idea.linkedIdeas = []; });
+
                 }
             } catch (e) {
                 console.error("Failed to load data, resetting.", e);
@@ -948,6 +1039,24 @@
             }
             contentWrapper.appendChild(mainContent);
 
+            // Display linked ideas
+            if (ideaObj.linkedIdeas && ideaObj.linkedIdeas.length > 0) {
+                const linkedIdeasContainer = document.createElement('div');
+                linkedIdeasContainer.className = 'text-xs text-blue-300 mt-2 flex flex-wrap gap-1';
+                linkedIdeasContainer.innerHTML = '<span class="font-semibold">Linked:</span> ';
+                ideaObj.linkedIdeas.forEach(linkedId => {
+                    const linkedIdea = findIdeaById(linkedId);
+                    if (linkedIdea) {
+                        const linkedIdeaSpan = document.createElement('span');
+                        linkedIdeaSpan.className = 'bg-blue-600/30 px-2 py-1 rounded-full cursor-pointer hover:bg-blue-600/50 transition';
+                        linkedIdeaSpan.textContent = linkedIdea.originalIdea.substring(0, 20) + (linkedIdea.originalIdea.length > 20 ? '...' : '');
+                        linkedIdeaSpan.onclick = (e) => { e.stopPropagation(); openChat(linkedIdea); }; // Open chat of linked idea
+                        linkedIdeasContainer.appendChild(linkedIdeaSpan);
+                    }
+                });
+                contentWrapper.appendChild(linkedIdeasContainer);
+            }
+
             const buttonContainer = document.createElement('div');
             buttonContainer.className = 'flex items-center gap-2 justify-end border-t border-white/10 pt-3 flex-wrap';
             
@@ -1003,6 +1112,13 @@
                     moveBtn.innerHTML = `Move`;
                     moveBtn.onclick = (e) => { e.stopPropagation(); openMoveModal(ideaObj.id); };
                     buttonContainer.appendChild(moveBtn);
+
+                    // Link Idea Button
+                    const linkBtn = document.createElement('button');
+                    linkBtn.className = 'secondary-btn text-sm font-semibold py-1 px-3 rounded-full transition';
+                    linkBtn.innerHTML = `Link`;
+                    linkBtn.onclick = (e) => { e.stopPropagation(); openLinkIdeaModal(ideaObj.id); };
+                    buttonContainer.appendChild(linkBtn);
                 }
 
                 const chatButton = document.createElement('button');
@@ -1020,7 +1136,7 @@
                 if (type !== 'generated') {
                      const deleteButton = document.createElement('button');
                      deleteButton.className = 'bg-red-500/50 text-white p-2 rounded-full hover:bg-red-500/80 transition';
-                     deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 0 0 1 2 2v2"></path></svg>`;
+                     deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
                      deleteButton.onclick = (e) => { e.stopPropagation(); deleteIdea(ideaObj.id); };
                      buttonContainer.appendChild(deleteButton);
                 }
@@ -1245,6 +1361,302 @@
             uiElements.confirmModalConfirmBtn.addEventListener('click', confirmActionCallback);
             uiElements.confirmModalCancelBtn.addEventListener('click', cancelActionCallback);
         }
+
+        // Functions for Link Idea Modal
+        function openLinkIdeaModal(ideaId) {
+            linkingIdeaId = ideaId;
+            uiElements.linkIdeaSearchInput.value = ''; // Clear search input
+            renderLinkableIdeas();
+            uiElements.linkIdeaModal.classList.remove('hidden');
+        }
+
+        function renderLinkableIdeas() {
+            uiElements.linkableIdeasList.innerHTML = '';
+            const searchTerm = uiElements.linkIdeaSearchInput.value.toLowerCase();
+            const currentIdea = findIdeaById(linkingIdeaId);
+            const allIdeas = [...ideasData.uncategorized, ...ideasData.folders.flatMap(f => f.ideas)];
+
+            const filteredIdeas = allIdeas.filter(idea => 
+                idea.id !== linkingIdeaId && // Cannot link an idea to itself
+                !currentIdea.linkedIdeas.includes(idea.id) && // Cannot link an idea that's already linked
+                idea.originalIdea.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredIdeas.length > 0) {
+                filteredIdeas.forEach(idea => {
+                    const ideaCard = document.createElement('div');
+                    ideaCard.className = 'glass-card p-3 rounded-lg flex items-center justify-between cursor-pointer hover:bg-white/10 transition';
+                    ideaCard.textContent = idea.originalIdea;
+                    ideaCard.onclick = () => linkIdea(linkingIdeaId, idea.id);
+                    uiElements.linkableIdeasList.appendChild(ideaCard);
+                });
+            } else {
+                uiElements.linkableIdeasList.innerHTML = `<p class="text-center" style="color:var(--text-secondary)">No other ideas to link.</p>`;
+            }
+        }
+
+        function linkIdea(sourceIdeaId, targetIdeaId) {
+            const sourceIdea = findIdeaById(sourceIdeaId);
+            if (sourceIdea && !sourceIdea.linkedIdeas.includes(targetIdeaId)) {
+                sourceIdea.linkedIdeas.push(targetIdeaId);
+                saveData();
+                showError("Idea linked successfully!");
+                renderLinkableIdeas(); // Re-render the list in the modal
+                renderSavedIdeas(); // Update the main saved ideas list to show new link
+            }
+        }
+
+        // Functions for Idea Map Visualization
+        function openIdeaMapModal() {
+            uiElements.ideaMapModal.classList.remove('hidden');
+            ctx = uiElements.ideaMapCanvas.getContext('2d');
+            handleCanvasResize(); // Set canvas size on open
+            drawIdeaMap();
+        }
+
+        function handleCanvasResize() {
+            // Set canvas display size to fill its container
+            uiElements.ideaMapCanvas.style.width = '100%';
+            uiElements.ideaMapCanvas.style.height = '100%';
+            // Set canvas internal resolution to match display size for crisp rendering
+            uiElements.ideaMapCanvas.width = uiElements.ideaMapCanvas.offsetWidth;
+            uiElements.ideaMapCanvas.height = uiElements.ideaMapCanvas.offsetHeight;
+            drawIdeaMap(); // Redraw map after resizing
+        }
+
+        function drawIdeaMap() {
+            if (!ctx) return;
+
+            ctx.clearRect(0, 0, uiElements.ideaMapCanvas.width, uiElements.ideaMapCanvas.height);
+            ctx.save();
+            
+            // Apply camera transformations
+            ctx.translate(uiElements.ideaMapCanvas.width / 2, uiElements.ideaMapCanvas.height / 2);
+            ctx.scale(camera.zoom, camera.zoom);
+            ctx.translate(-camera.x, -camera.y);
+
+            const allIdeas = [...ideasData.uncategorized, ...ideasData.folders.flatMap(f => f.ideas)];
+            // Filter out ideas that are only in trash (unless we want to visualize them)
+            const activeIdeas = allIdeas.filter(idea => ideasData.trash.indexOf(idea) === -1);
+
+            // Simple layout algorithm: Circle layout for now
+            const centerX = 0;
+            const centerY = 0;
+            const radius = 200; // Adjust as needed
+            const angleStep = (Math.PI * 2) / activeIdeas.length;
+
+            activeIdeas.forEach((idea, index) => {
+                // Calculate position for circular layout
+                const angle = index * angleStep;
+                idea.x = centerX + radius * Math.cos(angle);
+                idea.y = centerY + radius * Math.sin(angle);
+
+                // Draw links first
+                idea.linkedIdeas.forEach(linkedId => {
+                    const linkedIdea = activeIdeas.find(i => i.id === linkedId);
+                    if (linkedIdea) {
+                        ctx.beginPath();
+                        ctx.moveTo(idea.x, idea.y);
+                        ctx.lineTo(linkedIdea.x, linkedIdea.y);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                });
+            });
+
+            activeIdeas.forEach(idea => {
+                // Draw node circle
+                ctx.beginPath();
+                ctx.arc(idea.x, idea.y, NODE_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(102, 126, 234, 0.8)'; // Using a theme color
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw node text
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Wrap text for idea titles
+                wrapText(ctx, idea.originalIdea, idea.x, idea.y, TEXT_MAX_WIDTH, 14);
+            });
+
+            ctx.restore();
+        }
+
+        // Helper function for wrapping text on canvas
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            let lines = [];
+            for(let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = context.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    lines.push(line);
+                    line = words[n] + ' ';
+                } else {
+                    line = testLine;
+                }
+            }
+            lines.push(line); // Add the last line
+
+            // Center the block of text vertically
+            let totalHeight = lines.length * lineHeight;
+            let startY = y - (totalHeight / 2) + (lineHeight / 2);
+
+            for (let i = 0; i < lines.length; i++) {
+                context.fillText(lines[i], x, startY + (i * lineHeight));
+            }
+        }
+
+        // Canvas Pan and Zoom Handlers
+        function handleMouseDown(e) {
+            isDragging = true;
+            lastPanX = e.clientX;
+            lastPanY = e.clientY;
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging) return;
+            const dx = e.clientX - lastPanX;
+            const dy = e.clientY - lastPanY;
+            camera.x -= dx / camera.zoom;
+            camera.y -= dy / camera.zoom;
+            lastPanX = e.clientX;
+            lastPanY = e.clientY;
+            drawIdeaMap();
+        }
+
+        function handleWheel(e) {
+            e.preventDefault(); // Prevent page scrolling
+            const scaleAmount = 1.1;
+            const mouseX = e.clientX - uiElements.ideaMapCanvas.getBoundingClientRect().left;
+            const mouseY = e.clientY - uiElements.ideaMapCanvas.getBoundingClientRect().top;
+
+            // Calculate mouse position relative to canvas center
+            const canvasX = mouseX - uiElements.ideaMapCanvas.width / 2;
+            const canvasY = mouseY - uiElements.ideaMapCanvas.height / 2;
+
+            // Adjust camera position to zoom towards the mouse
+            camera.x += canvasX / camera.zoom;
+            camera.y += canvasY / camera.zoom;
+
+            if (e.deltaY < 0) { // Zoom in
+                camera.zoom *= scaleAmount;
+            } else { // Zoom out
+                camera.zoom /= scaleAmount;
+            }
+
+            // Adjust camera position back after zoom
+            camera.x -= canvasX / camera.zoom;
+            camera.y -= canvasY / camera.zoom;
+
+            // Clamp zoom to reasonable values
+            camera.zoom = Math.max(0.1, Math.min(camera.zoom, 5)); 
+            drawIdeaMap();
+        }
+
+        // Touch handlers for pan and zoom
+        let lastTouches = [];
+
+        function handleTouchStart(e) {
+            e.preventDefault(); // Prevent scrolling
+            isDragging = true;
+            lastTouches = Array.from(e.touches);
+            if (lastTouches.length === 1) {
+                lastPanX = lastTouches[0].clientX;
+                lastPanY = lastTouches[0].clientY;
+            }
+        }
+
+        function handleTouchEnd() {
+            isDragging = false;
+            lastTouches = [];
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault(); // Prevent scrolling
+            if (!isDragging) return;
+
+            const currentTouches = Array.from(e.touches);
+
+            if (currentTouches.length === 1 && lastTouches.length === 1) {
+                // Single touch for panning
+                const dx = currentTouches[0].clientX - lastPanX;
+                const dy = currentTouches[0].clientY - lastPanY;
+                camera.x -= dx / camera.zoom;
+                camera.y -= dy / camera.zoom;
+                lastPanX = currentTouches[0].clientX;
+                lastPanY = currentTouches[0].clientY;
+            } else if (currentTouches.length === 2 && lastTouches.length === 2) {
+                // Two touches for zooming (pinch gesture)
+                const dist1 = Math.hypot(lastTouches[0].clientX - lastTouches[1].clientX,
+                                        lastTouches[0].clientY - lastTouches[1].clientY);
+                const dist2 = Math.hypot(currentTouches[0].clientX - currentTouches[1].clientX,
+                                        currentTouches[0].clientY - currentTouches[1].clientY);
+
+                const scaleFactor = dist2 / dist1;
+
+                // Calculate midpoint of current touches
+                const midX = (currentTouches[0].clientX + currentTouches[1].clientX) / 2;
+                const midY = (currentTouches[0].clientY + currentTouches[1].clientY) / 2;
+
+                // Transform midpoint to canvas coordinates
+                const canvasX = midX - uiElements.ideaMapCanvas.getBoundingClientRect().left - uiElements.ideaMapCanvas.width / 2;
+                const canvasY = midY - uiElements.ideaMapCanvas.getBoundingClientRect().top - uiElements.ideaMapCanvas.height / 2;
+
+                // Adjust camera position to zoom towards the midpoint
+                camera.x += canvasX / camera.zoom;
+                camera.y += canvasY / camera.zoom;
+
+                camera.zoom *= scaleFactor;
+
+                camera.x -= canvasX / camera.zoom;
+                camera.y -= canvasY / camera.zoom;
+
+                camera.zoom = Math.max(0.1, Math.min(camera.zoom, 5)); // Clamp zoom
+
+                lastTouches = currentTouches; // Update last touches for next move
+            }
+            drawIdeaMap();
+        }
+
+        // Handle click on idea node in map
+        uiElements.ideaMapCanvas.addEventListener('click', (e) => {
+            if (!ctx) return;
+
+            const rect = uiElements.ideaMapCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Transform mouse coordinates back to world coordinates
+            const worldX = (mouseX - uiElements.ideaMapCanvas.width / 2) / camera.zoom + camera.x;
+            const worldY = (mouseY - uiElements.ideaMapCanvas.height / 2) / camera.zoom + camera.y;
+
+            const allIdeas = [...ideasData.uncategorized, ...ideasData.folders.flatMap(f => f.ideas)];
+            const activeIdeas = allIdeas.filter(idea => ideasData.trash.indexOf(idea) === -1);
+
+            for (let i = 0; i < activeIdeas.length; i++) {
+                const idea = activeIdeas[i];
+                const distance = Math.sqrt(Math.pow(worldX - idea.x, 2) + Math.pow(worldY - idea.y, 2));
+                if (distance <= NODE_RADIUS) {
+                    // Idea clicked, open its chat modal
+                    openChat(idea);
+                    uiElements.ideaMapModal.classList.add('hidden'); // Close map modal
+                    break;
+                }
+            }
+        });
 
         addEventListeners();
     </script>
