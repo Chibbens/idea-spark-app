@@ -93,6 +93,9 @@
             color: var(--text-secondary);
             opacity: 0.7;
         }
+        .themed-input[type="checkbox"] {
+            accent-color: var(--favorite-color);
+        }
 
         .tab.active { background-color: var(--tab-active-bg); }
         .chat-bubble { padding: 0.75rem 1rem; border-radius: 1rem; max-width: 80%; }
@@ -109,6 +112,7 @@
         }
         .idea-card.selected {
             outline: 2px solid var(--favorite-color);
+            outline-offset: -2px;
         }
     </style>
 </head>
@@ -168,7 +172,6 @@
                 <aside id="folder-panel" class="w-full md:w-1/3 md:border-r md:pr-6" style="border-color: var(--glass-border);">
                     <div class="flex gap-2 mb-4">
                         <button id="newFolderBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">New Folder</button>
-                        <button id="selectModeBtn" class="flex-1 secondary-btn text-sm font-semibold py-2 px-3 rounded-lg transition">Select</button>
                     </div>
                     <div id="folder-list" class="space-y-2">
                     </div>
@@ -273,186 +276,6 @@
         </div>
     </div>
     <script>
-        // --- DOM Elements ---
-        const uiElements = {
-            body: document.body, topicInput: document.getElementById('topic'), generateBtn: document.getElementById('generateBtn'),
-            resultsDiv: document.getElementById('results'), loader: document.getElementById('loader'), errorMessage: document.getElementById('error-message'),
-            savedIdeasList: document.getElementById('saved-ideas-list'),
-            generatorView: document.getElementById('generatorView'), savedView: document.getElementById('savedView'), storeView: document.getElementById('storeView'), themesView: document.getElementById('themesView'),
-            generatorTab: document.getElementById('generatorTab'), savedTab: document.getElementById('savedTab'), storeTab: document.getElementById('storeTab'), themesTab: document.getElementById('themesTab'),
-            chatModal: document.getElementById('chatModal'), closeChatModalBtn: document.getElementById('closeChatModalBtn'),
-            chatHistory: document.getElementById('chat-history'), chatInput: document.getElementById('chat-input'), chatSendBtn: document.getElementById('chat-send-btn'),
-            newFolderBtn: document.getElementById('newFolderBtn'), searchInput: document.getElementById('searchInput'), 
-            folderList: document.getElementById('folder-list'),
-            themeList: document.getElementById('theme-list'),
-            selectModeBtn: document.getElementById('selectModeBtn'), bulkActionBar: document.getElementById('bulkActionBar'),
-            selectionCount: document.getElementById('selectionCount'), bulkMoveBtn: document.getElementById('bulkMoveBtn'), bulkDeleteBtn: document.getElementById('bulkDeleteBtn'),
-            moveFolderModal: document.getElementById('moveFolderModal'), moveFolderSelect: document.getElementById('moveFolderSelect'),
-            cancelMoveBtn: document.getElementById('cancelMoveBtn'), confirmMoveBtn: document.getElementById('confirmMoveBtn'),
-            folderColorModal: document.getElementById('folderColorModal'), colorOptions: document.getElementById('color-options'),
-            newFolderModal: document.getElementById('newFolderModal'), newFolderName: document.getElementById('newFolderName'),
-            cancelNewFolderBtn: document.getElementById('cancelNewFolderBtn'), confirmNewFolderBtn: document.getElementById('confirmNewFolderBtn'),
-            folderPanel: document.getElementById('folder-panel'), ideasPanel: document.getElementById('ideas-panel'),
-            backToFoldersBtn: document.getElementById('backToFoldersBtn')
-        };
-
-        // --- App State & Config ---
-        let ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'], trash: [] };
-        let activeFolder = 'all'; // 'all', 'favorites', 'trash', or folder index
-        let generatedIdeas = [];
-        let editing = { ideaId: null };
-        let activeChat = { ideaId: null };
-        let moving = { ideaId: null, isBulk: false };
-        let changingColorFolderIndex = null;
-        let selectMode = false;
-        let selectedItems = new Set();
-        const FREE_GENERATIONS_LIMIT = 5;
-        let generationCount = 0;
-        const FOLDER_COLORS = {
-            default: 'border-white/20', red: 'border-red-500', blue: 'border-blue-500',
-            green: 'border-green-500', yellow: 'border-yellow-500', purple: 'border-purple-500',
-            pink: 'border-pink-500',
-        };
-
-        // --- Event Listeners ---
-        function addEventListeners() {
-            window.addEventListener('load', () => {
-                loadIdeasData();
-                const savedTheme = localStorage.getItem('ideaSparkTheme') || 'classic';
-                setTheme(savedTheme);
-            });
-            uiElements.generatorTab.addEventListener('click', () => switchView('generator'));
-            uiElements.savedTab.addEventListener('click', () => switchView('saved'));
-            uiElements.storeTab.addEventListener('click', () => switchView('store'));
-            uiElements.themesTab.addEventListener('click', () => switchView('themes'));
-            uiElements.generateBtn.addEventListener('click', handleGeneration);
-            uiElements.newFolderBtn.addEventListener('click', () => uiElements.newFolderModal.classList.remove('hidden'));
-            uiElements.cancelNewFolderBtn.addEventListener('click', () => uiElements.newFolderModal.classList.add('hidden'));
-            uiElements.confirmNewFolderBtn.addEventListener('click', handleConfirmNewFolder);
-            uiElements.searchInput.addEventListener('input', renderSavedIdeas);
-            uiElements.chatSendBtn.addEventListener('click', handleChatSend);
-            uiElements.chatInput.addEventListener('keypress', (e) => (e.key === 'Enter') && handleChatSend());
-            uiElements.closeChatModalBtn.addEventListener('click', () => uiElements.chatModal.classList.add('hidden'));
-            uiElements.cancelMoveBtn.addEventListener('click', () => uiElements.moveFolderModal.classList.add('hidden'));
-            uiElements.confirmMoveBtn.addEventListener('click', handleConfirmMove);
-            uiElements.folderColorModal.addEventListener('click', (e) => (e.target === uiElements.folderColorModal) && uiElements.folderColorModal.classList.add('hidden'));
-            uiElements.selectModeBtn.addEventListener('click', toggleSelectMode);
-            uiElements.bulkMoveBtn.addEventListener('click', handleBulkMove);
-            uiElements.bulkDeleteBtn.addEventListener('click', handleBulkDelete);
-            uiElements.backToFoldersBtn.addEventListener('click', () => showFoldersOnMobile());
-        }
-        
-        // --- Core Functions: View Switching, Generation, API Fetching ---
-        function switchView(viewName) {
-            editing.ideaId = null;
-            selectMode = false; 
-            updateBulkActionBar();
-            const views = ['generator', 'saved', 'store', 'themes'];
-            views.forEach(v => {
-                uiElements[`${v}View`].classList.toggle('hidden', v !== viewName);
-                uiElements[`${v}Tab`].classList.toggle('active', v === viewName);
-            });
-            if (viewName === 'saved') {
-                activeFolder = 'all'; 
-                renderFolderList();
-                renderSavedIdeas();
-                if (window.innerWidth < 768) { // md breakpoint
-                    showFoldersOnMobile();
-                }
-            } else if (viewName === 'themes') {
-                renderThemeList();
-            }
-        }
-        
-        async function handleGeneration() {
-             const topic = uiElements.topicInput.value.trim();
-            if (!topic) { showError("Please enter a topic first!"); return; }
-            if (generationCount >= FREE_GENERATIONS_LIMIT) {
-                showError("You've reached your free generation limit."); return;
-            }
-            uiElements.loader.classList.remove('hidden');
-            uiElements.resultsDiv.innerHTML = '';
-            uiElements.errorMessage.classList.add('hidden');
-            uiElements.generateBtn.disabled = true;
-            try {
-                const ideas = await fetchIdeasFromAI(`Generate a numbered list of 5 creative and unique ideas for the following topic: "${topic}". Return only the numbered list.`);
-                generatedIdeas = ideas.map(idea => ({
-                    id: `gen_${Date.now()}_${Math.random()}`,
-                    originalIdea: idea.replace(/^\d+\.\s*/, ''),
-                    conversation: []
-                }));
-                displayGeneratedIdeas();
-                generationCount++;
-            } catch (error) {
-                console.error("A detailed error occurred:", error);
-                showError("Sorry, we couldn't generate ideas right now.");
-            } finally {
-                uiElements.loader.classList.add('hidden');
-                uiElements.generateBtn.disabled = false;
-            }
-        }
-        
-        async function fetchIdeasFromAI(prompt) {
-            const functionUrl = '/.netlify/functions/generate-ideas';
-            const response = await fetch(functionUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
-            });
-            if (!response.ok) throw new Error(`Serverless function failed with status ${response.status}`);
-            const data = await response.json();
-            if (data.ideas) return data.ideas;
-            throw new Error(data.error || "Invalid response from serverless function.");
-        }
-        
-        // --- Data Persistence & Themes ---
-        function loadIdeasData() {
-            try {
-                const data = localStorage.getItem('ideaSparkData_v6');
-                if (data) {
-                    const parsedData = JSON.parse(data);
-                    // Ensure all new properties exist for older data structures
-                    ideasData.folders = parsedData.folders?.map(f => ({ ...f, id: f.id || `folder_${Math.random()}`, isCollapsed: f.isCollapsed ?? false, color: f.color ?? 'default' })) || [];
-                    ideasData.uncategorized = parsedData.uncategorized || [];
-                    ideasData.favoriteIDs = parsedData.favoriteIDs || [];
-                    ideasData.ownedThemes = parsedData.ownedThemes || ['classic', 'light', 'dark'];
-                    ideasData.trash = parsedData.trash || [];
-                } else {
-                    ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'], trash: [] };
-                }
-            } catch (e) {
-                console.error("Failed to load data, resetting.", e);
-                ideasData = { folders: [], uncategorized: [], favoriteIDs: [], ownedThemes: ['classic', 'light', 'dark'], trash: [] };
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('ideaSparkData_v6', JSON.stringify(ideasData));
-            if (!uiElements.savedView.classList.contains('hidden')) {
-                renderFolderList();
-                renderSavedIdeas();
-            }
-            if (!uiElements.generatorView.classList.contains('hidden')) {
-                displayGeneratedIdeas();
-            }
-        }
-
-        function setTheme(themeName) {
-            if (!ideasData.ownedThemes.includes(themeName)) {
-                alert(`Theme "${themeName}" is not owned. Visit the store to purchase.`);
-                return;
-            }
-            uiElements.body.dataset.theme = themeName;
-            localStorage.setItem('ideaSparkTheme', themeName);
-        }
-        function toggleTheme() {
-            const themes = ideasData.ownedThemes;
-            const currentTheme = uiElements.body.dataset.theme || 'classic';
-            const currentIndex = themes.indexOf(currentTheme);
-            const nextIndex = (currentIndex + 1) % themes.length;
-            setTheme(themes[nextIndex]);
-        }
-
         // --- Folder, Search, Filter & Idea Actions ---
         function handleConfirmNewFolder() {
             const folderName = uiElements.newFolderName.value.trim();
@@ -479,25 +302,24 @@
         }
 
         function handleConfirmMove() {
-            if (moving.isBulk) {
-                const ideaIds = moving.ideaId; // this is an array of IDs
-                ideaIds.forEach(id => {
-                    const ideaToMove = findAndRemoveIdea(id);
-                    if(ideaToMove) {
-                        const targetFolderValue = uiElements.moveFolderSelect.value;
-                        if (targetFolderValue === 'uncategorized') ideasData.uncategorized.unshift(ideaToMove);
-                        else ideasData.folders[targetFolderValue].ideas.unshift(ideaToMove);
+            const ideasToMove = moving.isBulk ? moving.ideaId : [moving.ideaId];
+            const targetFolderValue = uiElements.moveFolderSelect.value;
+
+            ideasToMove.forEach(id => {
+                const idea = findAndRemoveIdea(id);
+                if (idea) {
+                    if (targetFolderValue === 'uncategorized') {
+                        ideasData.uncategorized.unshift(idea);
+                    } else {
+                        ideasData.folders[targetFolderValue].ideas.unshift(idea);
                     }
-                });
+                }
+            });
+            
+            if (moving.isBulk) {
                 toggleSelectMode(); // Exit select mode after bulk action
-            } else {
-                 if (!moving.ideaId) return;
-                 const ideaToMove = findAndRemoveIdea(moving.ideaId);
-                 if (!ideaToMove) return;
-                 const targetFolderValue = uiElements.moveFolderSelect.value;
-                 if (targetFolderValue === 'uncategorized') ideasData.uncategorized.unshift(ideaToMove);
-                 else ideasData.folders[targetFolderValue].ideas.unshift(ideaToMove);
             }
+
             saveData();
             uiElements.moveFolderModal.classList.add('hidden');
         }
@@ -607,7 +429,6 @@
                 displayGeneratedIdeas();
             }
         }
-
         function findIdeaById(id) {
             const allIdeas = [...ideasData.uncategorized, ...ideasData.folders.flatMap(f => f.ideas), ...ideasData.trash];
             return allIdeas.find(idea => idea.id === id) || null;
@@ -616,7 +437,9 @@
         function findAndRemoveIdea(id) {
             const location = findIdeaLocation(id);
             if(location) {
-                ideasData.favoriteIDs = ideasData.favoriteIDs.filter(favId => favId !== id);
+                // Also remove from favorites if it exists there
+                const favIndex = ideasData.favoriteIDs.indexOf(id);
+                if (favIndex > -1) ideasData.favoriteIDs.splice(favIndex, 1);
                 return location.array.splice(location.ideaIndex, 1)[0];
             }
             return null;
@@ -650,7 +473,7 @@
             }
             
             const mainContentWrapper = document.createElement('div');
-            mainContentWrapper.className = 'flex-grow';
+            mainContentWrapper.className = 'flex-grow flex flex-col gap-3';
             
             const mainContent = document.createElement('div');
             const isEditingThis = editing.ideaId === ideaObj.id;
@@ -667,10 +490,9 @@
                 mainContent.textContent = ideaObj.originalIdea;
             }
             mainContentWrapper.appendChild(mainContent);
-            ideaElement.appendChild(mainContentWrapper);
-
+            
             const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'flex items-center gap-2 justify-end flex-shrink-0 flex-wrap';
+            buttonContainer.className = 'flex items-center gap-2 justify-end border-t border-white/10 pt-3 mt-3 flex-wrap';
 
             if(isEditingThis) {
                  const saveBtn = document.createElement('button');
@@ -692,7 +514,7 @@
 
                 const permDeleteBtn = document.createElement('button');
                 permDeleteBtn.className = 'bg-red-500/80 text-white text-sm font-semibold py-1 px-3 rounded-full hover:bg-red-500/100 transition';
-                permDeleteBtn.innerHTML = `Delete`;
+                permDeleteBtn.innerHTML = `Delete Forever`;
                 permDeleteBtn.onclick = () => permanentlyDeleteIdea(ideaObj.id);
                 buttonContainer.appendChild(permDeleteBtn);
             } else {
@@ -741,10 +563,10 @@
                      buttonContainer.appendChild(deleteButton);
                 }
             }
-            ideaElement.appendChild(buttonContainer);
+            mainContentWrapper.appendChild(buttonContainer)
+            ideaElement.appendChild(mainContentWrapper);
             return ideaElement;
         }
-
         function displayGeneratedIdeas() {
             uiElements.resultsDiv.innerHTML = ''; 
             generatedIdeas.forEach((ideaObj) => {
@@ -851,13 +673,15 @@
         
         // --- Mobile Responsive ---
         function showFoldersOnMobile() {
-            uiElements.folderPanel.classList.remove('hidden');
+            uiElements.folderPanel.classList.remove('hidden', 'md:w-1/3');
+            uiElements.folderPanel.classList.add('w-full');
             uiElements.ideasPanel.classList.add('hidden');
         }
 
         function showIdeasOnMobile() {
             uiElements.folderPanel.classList.add('hidden');
             uiElements.ideasPanel.classList.remove('hidden');
+            uiElements.ideasPanel.classList.add('w-full');
         }
 
         // --- Chat ---
