@@ -92,14 +92,23 @@
             background-color: var(--input-bg);
             border-color: var(--glass-border);
             color: var(--text-main);
-            /* Added specific styles for dropdown text visibility */
-            -webkit-appearance: none; /* Remove default dropdown arrow for better styling */
+            /* Removed specific styles for dropdown arrow for text inputs */
+            -webkit-appearance: none; 
             appearance: none;
+            /* Ensure the background image is only for select elements, if needed */
+            background-image: none; 
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
+        }
+        /* Re-add dropdown arrow specifically for select elements */
+        select.themed-input {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 0.75rem center;
             background-size: 1.5em 1.5em;
         }
+
         .themed-input::placeholder {
             color: var(--text-secondary);
             opacity: 0.7;
@@ -1033,7 +1042,7 @@
                 const btn = document.createElement('button');
                 let colorClass = 'border-transparent';
                 if (typeof value === 'number') {
-                    colorClass = FOLDER_COLORS[ideasData.folders[value].color] || FFOLDER_COLORS.default;
+                    colorClass = FOLDER_COLORS[ideasData.folders[value].color] || FOLDER_COLORS.default;
                 }
                 btn.className = `folder-item w-full text-left p-2 rounded-lg font-semibold transition flex justify-between items-center border-l-4 ${activeFolder === value ? 'active' : 'hover:bg-white/10'} ${colorClass}`;
                 
@@ -1159,6 +1168,7 @@
             originalIdeaBubble.className = 'chat-bubble chat-bubble-ai';
             originalIdeaBubble.innerHTML = `<p class="font-bold mb-1">Original Idea</p><p>${idea.originalIdea}</p>`;
             uiElements.chatHistory.appendChild(originalIdeaBubble);
+            // Changed role to 'model' for AI messages for API consistency
             idea.conversation.forEach(msg => {
                 const bubble = document.createElement('div');
                 bubble.className = `chat-bubble ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`;
@@ -1181,17 +1191,18 @@
             // Construct the prompt for AI to continue the conversation about the specific idea
             let conversationPrompt = `Given the original idea: "${idea.originalIdea}".\n`;
             conversationPrompt += `Previous conversation history:\n`;
-            idea.conversation.forEach(msg => { // Send all messages in context, including the last user message
+            // Using 'model' role for AI messages and 'user' for user messages in the prompt
+            idea.conversation.forEach(msg => { 
                 conversationPrompt += `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.text}\n`;
             });
-            // Removed adding the latest user message separately as it's now included in the loop above.
             conversationPrompt += `\nBased on the original idea and the conversation history, please respond to the user's last message. Focus on discussing, refining, or elaborating on the *original idea*. Do not generate new, unrelated ideas. Provide a direct, conversational response.`;
 
             try {
                 // Pass true for isChat to indicate this is a chat refinement request
                 const response = await fetchIdeasFromAI(conversationPrompt, true); 
                 const aiResponse = response[0]; // fetchIdeasFromAI now returns a single string for chat
-                idea.conversation.push({ role: 'ai', text: aiResponse });
+                // Changed role from 'ai' to 'model' for API consistency
+                idea.conversation.push({ role: 'model', text: aiResponse });
                 saveData();
                 renderChatHistory();
             } catch (error) {
