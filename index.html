@@ -350,7 +350,7 @@
             pink: 'border-pink-500',
         };
 
-        // --- Event Listeners ---
+        // --- Event Listeners (UPDATED) ---
         function addEventListeners() {
             window.addEventListener('load', () => {
                 loadIdeasData();
@@ -379,7 +379,10 @@
             uiElements.selectModeBtn.addEventListener('click', toggleSelectMode);
             uiElements.bulkMoveBtn.addEventListener('click', handleBulkMove);
             uiElements.bulkDeleteBtn.addEventListener('click', handleBulkDelete);
+            // Store buttons
             uiElements.removeAdsBtn.addEventListener('click', purchaseRemoveAds);
+            uiElements.unlimitedBtn.addEventListener('click', purchaseUnlimitedGenerations);
+            uiElements.buyHackerThemeBtn.addEventListener('click', purchaseHackerTheme);
         }
         // --- Core Functions: View Switching, Generation, API Fetching ---
         function switchView(viewName) {
@@ -443,7 +446,7 @@
         // --- Data Persistence & Themes ---
         function loadIdeasData() {
             try {
-                const data = localStorage.getItem('ideaSparkData_v6'); // Incremented version
+                const data = localStorage.getItem('ideaSparkData_v7'); // Incremented version
                 if (data) {
                     const parsedData = JSON.parse(data);
                     // Load all data, providing defaults for new properties
@@ -463,7 +466,8 @@
         }
 
         function saveData() {
-            localStorage.setItem('ideaSparkData_v6', JSON.stringify(ideasData)); // Incremented version
+            localStorage.setItem('ideaSparkData_v7', JSON.stringify(ideasData)); // Incremented version
+            updateUIForPurchases();
             if (!uiElements.savedView.classList.contains('hidden')) {
                 renderFolderList();
                 renderSavedIdeas();
@@ -471,7 +475,6 @@
             if (!uiElements.generatorView.classList.contains('hidden')) {
                 displayGeneratedIdeas();
             }
-             updateUIForPurchases();
         }
 
         function setTheme(themeName) {
@@ -483,14 +486,29 @@
             localStorage.setItem('ideaSparkTheme', themeName);
         }
         
-        // --- Purchase & UI Update Functions (NEW) ---
+        // --- Purchase & UI Update Functions (UPDATED) ---
         function purchaseRemoveAds() {
-            // In a real mobile app, you would trigger the Google Play Billing flow here.
-            // For this web version, we'll simulate the purchase.
             console.log("Simulating 'Remove Ads' purchase...");
             ideasData.adsRemoved = true;
             saveData();
             showError("Ads have been removed! Thank you for your support.");
+        }
+
+        function purchaseUnlimitedGenerations() {
+            console.log("Simulating 'Unlimited Generations' purchase...");
+            ideasData.unlimitedGenerations = true;
+            saveData();
+            showError("You now have unlimited generations! Thank you.");
+        }
+
+        function purchaseHackerTheme() {
+            console.log("Simulating 'Hacker Theme' purchase...");
+            if (!ideasData.ownedThemes.includes('hacker')) {
+                ideasData.ownedThemes.push('hacker');
+            }
+            saveData();
+            renderThemeList(); // Re-render the theme list to show the new theme as owned
+            showError("Hacker theme unlocked!");
         }
 
         function updateUIForPurchases() {
@@ -589,7 +607,7 @@
             }
         }
         
-        // --- Folder, Search, Filter & Idea Actions ---
+        // --- Folder, Search, Filter & Idea Actions (UPDATED) ---
         function handleConfirmNewFolder() {
             const folderName = uiElements.newFolderName.value.trim();
             if (folderName && !ideasData.folders.some(f => f.name === folderName)) {
@@ -599,6 +617,28 @@
                 uiElements.newFolderModal.classList.add('hidden');
             } else if (folderName) {
                 showError("A folder with that name already exists.");
+            }
+        }
+
+        function deleteFolder(folderIndex) {
+            const folder = ideasData.folders[folderIndex];
+            if (!folder) return;
+
+            if (window.confirm(`Are you sure you want to delete the folder "${folder.name}"? All ideas within it will be moved to Uncategorized.`)) {
+                // Move ideas to uncategorized
+                if (folder.ideas && folder.ideas.length > 0) {
+                    ideasData.uncategorized.unshift(...folder.ideas);
+                }
+
+                // If the currently active folder is the one being deleted, switch to 'all'
+                if (activeFolder === folderIndex) {
+                    activeFolder = 'all';
+                }
+
+                // Remove the folder
+                ideasData.folders.splice(folderIndex, 1);
+                
+                saveData();
             }
         }
 
@@ -889,7 +929,6 @@
             ideaElement.appendChild(contentWrapper);
             return ideaElement;
         }
-
         function displayGeneratedIdeas() {
             uiElements.resultsDiv.innerHTML = ''; 
             generatedIdeas.forEach((ideaObj) => {
@@ -899,31 +938,47 @@
 
         function renderFolderList() {
             uiElements.folderList.innerHTML = '';
-            const createFolderItem = (text, value) => {
+            const createFolderItem = (text, value, isDeletable = false, index = -1) => {
                 const btn = document.createElement('button');
                 let colorClass = 'border-transparent';
                 if (typeof value === 'number') {
                     colorClass = FOLDER_COLORS[ideasData.folders[value].color] || FOLDER_COLORS.default;
                 }
                 btn.className = `folder-item w-full text-left p-2 rounded-lg font-semibold transition flex justify-between items-center border-l-4 ${activeFolder === value ? 'active' : 'hover:bg-white/10'} ${colorClass}`;
+                
+                const mainContent = document.createElement('div');
+                mainContent.className = 'flex-grow flex justify-between items-center';
+                
                 const span = document.createElement('span');
                 span.textContent = text;
-                btn.appendChild(span);
+                mainContent.appendChild(span);
+                
+                if(isDeletable) {
+                    const buttonWrapper = document.createElement('div');
+                    buttonWrapper.className = 'flex items-center';
+                    if(activeFolder === index) {
+                        const colorBtn = document.createElement('button');
+                        colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
+                        colorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
+                        colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(index); };
+                        buttonWrapper.appendChild(colorBtn);
+                    }
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'p-1 rounded-full hover:bg-red-500/50';
+                    deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                    deleteBtn.onclick = (e) => { e.stopPropagation(); deleteFolder(index); };
+                    buttonWrapper.appendChild(deleteBtn);
+                    mainContent.appendChild(buttonWrapper);
+                }
+
+                btn.appendChild(mainContent);
                 btn.onclick = () => { if(!selectMode) { activeFolder = value; renderFolderList(); renderSavedIdeas(); } };
                 return btn;
             };
             uiElements.folderList.appendChild(createFolderItem('All Saved', 'all'));
             uiElements.folderList.appendChild(createFolderItem('Favorites', 'favorites'));
             ideasData.folders.forEach((folder, index) => {
-                const folderBtn = createFolderItem(folder.name, index);
-                if(activeFolder === index) {
-                    const colorBtn = document.createElement('button');
-                    colorBtn.className = 'p-1 rounded-full hover:bg-white/20';
-                    colorBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
-                    colorBtn.onclick = (e) => { e.stopPropagation(); openColorModal(index); };
-                    folderBtn.appendChild(colorBtn);
-                }
-                uiElements.folderList.appendChild(folderBtn);
+                uiElements.folderList.appendChild(createFolderItem(folder.name, index, true, index));
             });
             uiElements.folderList.appendChild(createFolderItem('Trash', 'trash'));
         }
@@ -940,7 +995,7 @@
                 ideasToRender = allIdeas.filter(idea => ideasData.favoriteIDs.includes(idea.id));
             } else if (activeFolder === 'trash') {
                 ideasToRender = ideasData.trash;
-            } else if (activeFolder !== 'all' && activeFolder !== 'favorites' && ideasData.folders[activeFolder]) {
+            } else if (typeof activeFolder === 'number' && ideasData.folders[activeFolder]) {
                 ideasToRender = ideasData.folders[activeFolder].ideas;
             }
 
