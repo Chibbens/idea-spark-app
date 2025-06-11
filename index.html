@@ -175,7 +175,7 @@
                 </aside>
 
                 <!-- Right Panel: Ideas -->
-                <main id="ideas-panel" class="w-full md:w-2/3 relative">
+                <main id="ideas-panel" class="w-full md:w-2/3 relative mt-6 md:mt-0">
                     <div class="flex gap-2 mb-4">
                          <button id="backToFoldersBtn" class="md:hidden secondary-btn p-2 rounded-full">&larr;</button>
                         <input type="text" id="searchInput" class="flex-grow w-full border rounded-full py-1 px-3 focus:outline-none themed-input" placeholder="Search ideas...">
@@ -445,7 +445,6 @@
             uiElements.body.dataset.theme = themeName;
             localStorage.setItem('ideaSparkTheme', themeName);
         }
-
         function toggleTheme() {
             const themes = ideasData.ownedThemes;
             const currentTheme = uiElements.body.dataset.theme || 'classic';
@@ -453,6 +452,7 @@
             const nextIndex = (currentIndex + 1) % themes.length;
             setTheme(themes[nextIndex]);
         }
+
         // --- Folder, Search, Filter & Idea Actions ---
         function handleConfirmNewFolder() {
             const folderName = uiElements.newFolderName.value.trim();
@@ -480,9 +480,10 @@
 
         function handleConfirmMove() {
             if (moving.isBulk) {
-                moving.ideaId.forEach(id => {
+                const ideaIds = moving.ideaId; // this is an array of IDs
+                ideaIds.forEach(id => {
                     const ideaToMove = findAndRemoveIdea(id);
-                    if (ideaToMove) {
+                    if(ideaToMove) {
                         const targetFolderValue = uiElements.moveFolderSelect.value;
                         if (targetFolderValue === 'uncategorized') ideasData.uncategorized.unshift(ideaToMove);
                         else ideasData.folders[targetFolderValue].ideas.unshift(ideaToMove);
@@ -633,7 +634,6 @@
             return null;
         }
 
-        // --- UI Rendering ---
         function createIdeaCard(ideaObj, type) {
             const ideaElement = document.createElement('div');
             const isSelected = selectedItems.has(ideaObj.id);
@@ -757,7 +757,7 @@
             const createFolderItem = (text, value) => {
                 const btn = document.createElement('button');
                 let colorClass = 'border-transparent';
-                if (typeof value === 'number') {
+                if (typeof value === 'number' && ideasData.folders[value]) {
                     colorClass = FOLDER_COLORS[ideasData.folders[value].color] || FOLDER_COLORS.default;
                 }
                 btn.className = `folder-item w-full text-left p-2 rounded-lg font-semibold transition flex justify-between items-center border-l-4 ${activeFolder === value ? 'active' : 'hover:bg-white/10'} ${colorClass}`;
